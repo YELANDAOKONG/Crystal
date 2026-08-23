@@ -52,6 +52,13 @@ public sealed record AgentInvocationResult
                 nameof(parentInvocationId));
         }
 
+        if (parentInvocationId == invocationId)
+        {
+            throw new ArgumentException(
+                "An invocation cannot be its own parent.",
+                nameof(parentInvocationId));
+        }
+
         if (outcome == AgentInvocationOutcome.Completed
             && agentResult is null)
         {

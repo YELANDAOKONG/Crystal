@@ -41,7 +41,9 @@ opaque continuation state.
 
 One provider-native reasoning block maps to one ReasoningContent value. A block
 contains zero or more readable text segments and optional opaque state. At least
-one surface is required.
+one surface is required. Streaming deltas identify each readable segment with a
+stable zero-based text-segment index so transport chunk boundaries do not erase
+semantic segment boundaries.
 
 Opaque state:
 
@@ -120,6 +122,11 @@ Model and tool calls are counted when attempted. Tool batches are all-or-none
 with respect to the configured tool-call budget: Agent never starts a partial
 batch merely because some budget remains.
 
+Agent returns aggregated usage only when every attempted model call reports
+usage. If a model call times out or any completed response omits usage, the run
+usage is null. When every response reports usage but any response omits a
+reasoning-token count, only the aggregated reasoning-token count is null.
+
 Agent uses non-streaming IChatClient responses for model turns. Its own
 IAsyncEnumerable event stream observes turn boundaries and exact protocol
 objects. Direct provider streaming remains available through
@@ -152,6 +159,7 @@ boundary.
 - Public data values are immutable.
 - Mutable input collections are snapshotted.
 - Ordered data is never sorted, grouped, or deduplicated implicitly.
+- Public correlation values reject contradictory identifiers, names, and ancestry.
 - Provider-originated open values retain their raw string.
 - Provider options remain in adapter APIs rather than extension dictionaries.
 - Configured clients own provider and model selection.
@@ -163,9 +171,10 @@ boundary.
 ## Streaming semantics
 
 Provider streaming uses typed IAsyncEnumerable<T> events. Candidate and item
-indexes preserve interleaving. Identifier, name, argument, text, and reasoning
-deltas are explicitly identified as deltas; adapters must not pretend partial
-data is complete.
+indexes preserve interleaving. Reasoning text deltas additionally carry a
+text-segment index; every delta for one semantic segment uses the same index.
+Identifier, name, argument, text, and reasoning deltas are explicitly identified
+as deltas; adapters must not pretend partial data is complete.
 
 A complete stream must be aggregatable into the same semantic response as the
 non-streaming operation. Opaque state may be buffered by an adapter and emitted

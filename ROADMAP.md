@@ -24,6 +24,8 @@ baseline. Design documents and code must change together.
 - 2026-08-23: Existing JSON package references remain unchanged.
 - 2026-08-23: No unit-test project is currently authorized.
 - 2026-08-23: The existing net10.0 target remains unchanged.
+- 2026-08-23: Reasoning stream deltas identify semantic text segments explicitly.
+- 2026-08-23: Agent usage is present only when every model attempt reports it.
 
 ## Phase 0 — Product and architecture reset
 
@@ -46,7 +48,8 @@ Deliverables:
 - ordered text Embedding inputs and vectors;
 - ordered Completion text and reasoning items;
 - ordered Chat messages, reasoning, tool calls, and tool results;
-- non-streaming and optional typed streaming client interfaces; and
+- non-streaming and optional typed streaming client interfaces;
+- lossless reasoning text-segment identity in streams; and
 - lossless opaque reasoning continuation.
 
 Exit criteria: external adapters can implement all supported model capabilities

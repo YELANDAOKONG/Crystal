@@ -140,6 +140,7 @@ public sealed class Agent : IAgent
 
             if (modelOperation.TimedOut)
             {
+                usage.Add(null);
                 var durationResult = CreateResult(
                     request,
                     transcript,

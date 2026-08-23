@@ -49,6 +49,7 @@ a model, or own an end-user experience.
 - Readable reasoning text classified as summary or trace.
 - Opaque continuation state copied and replayed unchanged.
 - Ordered preservation across ordinary and tool-calling turns.
+- Stable candidate, item, and text-segment identity in reasoning streams.
 
 ### Tools
 
@@ -65,6 +66,7 @@ a model, or own an end-user experience.
 - Caller-supplied candidate selection.
 - Typed events containing exact model requests, responses, and tool results.
 - Exact transcript preservation and explicit stop reasons.
+- Aggregated usage only when every attempted model call reports usage.
 
 ### Harness
 

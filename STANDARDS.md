@@ -57,6 +57,7 @@
 - Snapshot mutable input collections and reject null elements.
 - Do not expose internally mutable arrays, lists, or JsonElement ownership.
 - Preserve order unless the API explicitly declares otherwise.
+- Reasoning stream deltas identify candidate, item, and text-segment indexes.
 - Keep provider-originated values open rather than forcing lossy enums.
 - Use named policy types instead of ambiguous public booleans.
 - Avoid ref and out except standard Try patterns.
@@ -103,6 +104,7 @@ Tests, once authorized, must prove:
 - Rejection without caller-authored output terminates execution.
 - Unhandled tool exceptions terminate execution.
 - Model and tool attempts consume limits even when they fail or time out.
+- Agent usage is null unless every attempted model call reports usage.
 - Context overflow is surfaced; Crystal does not truncate or summarize.
 
 ## Harness execution

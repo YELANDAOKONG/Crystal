@@ -31,7 +31,9 @@ public sealed record HarnessInvocationCompletedEvent : HarnessEvent
         ArgumentNullException.ThrowIfNull(result, nameof(result));
 
         if (result.SessionId != sessionId
-            || result.InvocationId != invocationId)
+            || result.InvocationId != invocationId
+            || result.AgentName != agentName
+            || result.ParentInvocationId != parentInvocationId)
         {
             throw new ArgumentException(
                 "The result correlation does not match the Harness event.",

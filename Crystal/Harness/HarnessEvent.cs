@@ -35,6 +35,13 @@ public abstract record HarnessEvent
                 nameof(parentInvocationId));
         }
 
+        if (parentInvocationId == invocationId)
+        {
+            throw new ArgumentException(
+                "An invocation cannot be its own parent.",
+                nameof(parentInvocationId));
+        }
+
         if (sequence < 0)
         {
             throw new ArgumentOutOfRangeException(

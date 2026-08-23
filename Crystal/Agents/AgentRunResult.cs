@@ -16,7 +16,10 @@ public sealed record AgentRunResult
     /// <param name="stopReason">The reason the run stopped.</param>
     /// <param name="modelCallCount">The attempted model-call count.</param>
     /// <param name="toolCallCount">The attempted tool-call count.</param>
-    /// <param name="usage">Aggregated provider-reported usage.</param>
+    /// <param name="usage">
+    /// Aggregated provider-reported usage when every attempted model call
+    /// reported it.
+    /// </param>
     /// <param name="finalFinishReason">
     /// The terminal candidate finish reason for normal completion.
     /// </param>
@@ -105,7 +108,8 @@ public sealed record AgentRunResult
     public int ToolCallCount { get; }
 
     /// <summary>
-    /// Gets aggregated provider-reported usage when available.
+    /// Gets aggregated provider-reported usage when every attempted model call
+    /// reported it.
     /// </summary>
     public TokenUsage? Usage { get; }
 

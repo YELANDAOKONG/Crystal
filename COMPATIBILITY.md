@@ -65,15 +65,17 @@ An adapter must:
 1. preserve every supported text, reasoning, tool-call, and tool-result item in
    provider order;
 2. preserve each reasoning block separately instead of merging blocks;
-3. retain the complete provider representation needed for continuation;
-4. distinguish readable summaries from readable raw traces;
-5. support reasoning blocks with no readable text;
-6. reject opaque formats it does not understand;
-7. preserve raw model tool arguments until the execution boundary;
-8. keep multiple candidates and their ordering;
-9. normalize usage without inferring hidden token counts from visible text;
-10. keep provider DTOs and raw responses outside the portable result; and
-11. ensure streaming aggregation is semantically equivalent to non-streaming.
+3. assign stable zero-based text-segment indexes to streamed reasoning text,
+   with every delta for one semantic segment sharing its index;
+4. retain the complete provider representation needed for continuation;
+5. distinguish readable summaries from readable raw traces;
+6. support reasoning blocks with no readable text;
+7. reject opaque formats it does not understand;
+8. preserve raw model tool arguments until the execution boundary;
+9. keep multiple candidates and their ordering;
+10. normalize usage without inferring hidden token counts from visible text;
+11. keep provider DTOs and raw responses outside the portable result; and
+12. ensure streaming aggregation is semantically equivalent to non-streaming.
 
 ## Current text-only limitation
 

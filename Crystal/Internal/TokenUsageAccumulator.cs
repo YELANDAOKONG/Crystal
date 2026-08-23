@@ -2,6 +2,7 @@ namespace Crystal.Internal;
 
 internal sealed class TokenUsageAccumulator
 {
+    private bool _hasCompleteUsage = true;
     private bool _hasCompleteReasoningUsage = true;
     private bool _hasUsage;
     private long _inputTokenCount;
@@ -12,6 +13,7 @@ internal sealed class TokenUsageAccumulator
     {
         if (usage is null)
         {
+            _hasCompleteUsage = false;
             return;
         }
 
@@ -34,7 +36,7 @@ internal sealed class TokenUsageAccumulator
 
     public TokenUsage? Build()
     {
-        if (!_hasUsage)
+        if (!_hasUsage || !_hasCompleteUsage)
         {
             return null;
         }
