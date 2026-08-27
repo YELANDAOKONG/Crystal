@@ -8,6 +8,8 @@
 - Runtime and exception text is plain English.
 - Crystal-authored diagnostics exclude credentials, prompt text, reasoning text,
   opaque state, raw tool arguments, tool exception details, and stack traces.
+- Public protocol values that can contain caller- or model-authored text use
+  content-free default string representations.
 - Comments explain constraints and intent rather than syntax.
 - Do not leave commented-out production code.
 - Do not modify dependencies without explicit authorization.

@@ -8,4 +8,7 @@ public abstract record ChatItem
     private protected ChatItem()
     {
     }
+
+    /// <inheritdoc />
+    public sealed override string ToString() => GetType().Name;
 }

@@ -28,4 +28,7 @@ public sealed record ReasoningText
     /// Gets the text classification.
     /// </summary>
     public ReasoningTextKind Kind { get; }
+
+    /// <inheritdoc />
+    public override string ToString() => nameof(ReasoningText);
 }

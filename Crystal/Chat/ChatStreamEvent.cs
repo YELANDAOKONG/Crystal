@@ -8,4 +8,7 @@ public abstract record ChatStreamEvent
     private protected ChatStreamEvent()
     {
     }
+
+    /// <inheritdoc />
+    public sealed override string ToString() => GetType().Name;
 }

@@ -31,4 +31,7 @@ public sealed record CompletionRequest
     /// Gets optional reasoning hints.
     /// </summary>
     public ReasoningOptions? Reasoning { get; }
+
+    /// <inheritdoc />
+    public override string ToString() => nameof(CompletionRequest);
 }

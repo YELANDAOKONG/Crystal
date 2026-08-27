@@ -8,4 +8,7 @@ public abstract record CompletionItem
     private protected CompletionItem()
     {
     }
+
+    /// <inheritdoc />
+    public sealed override string ToString() => GetType().Name;
 }

@@ -48,4 +48,7 @@ public sealed record ToolDefinition
     /// Gets a clone of the caller-authored JSON input schema.
     /// </summary>
     public JsonElement InputSchema => field.Clone();
+
+    /// <inheritdoc />
+    public override string ToString() => nameof(ToolDefinition);
 }

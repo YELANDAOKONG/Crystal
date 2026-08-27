@@ -39,4 +39,7 @@ public sealed record ToolOutput
     /// Gets the caller-declared output status.
     /// </summary>
     public ToolResultStatus Status { get; }
+
+    /// <inheritdoc />
+    public override string ToString() => nameof(ToolOutput);
 }

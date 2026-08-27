@@ -43,4 +43,7 @@ public sealed record ReasoningContent
     /// Gets the optional opaque continuation state.
     /// </summary>
     public OpaqueReasoningState? State { get; }
+
+    /// <inheritdoc />
+    public override string ToString() => nameof(ReasoningContent);
 }

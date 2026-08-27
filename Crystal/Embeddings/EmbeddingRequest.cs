@@ -23,4 +23,7 @@ public sealed record EmbeddingRequest
     /// Gets the ordered text inputs.
     /// </summary>
     public IReadOnlyList<string> Inputs { get; }
+
+    /// <inheritdoc />
+    public override string ToString() => nameof(EmbeddingRequest);
 }
