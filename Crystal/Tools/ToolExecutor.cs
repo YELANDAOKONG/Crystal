@@ -69,7 +69,7 @@ public sealed class ToolExecutor : IToolExecutor
 
         for (var index = 0; index < calls.Count; index++)
         {
-            results[index] = await ExecuteOneAsync(
+            results[index] = await ExecuteCallAsync(
                     calls[index],
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -108,7 +108,7 @@ public sealed class ToolExecutor : IToolExecutor
 
         try
         {
-            return await ExecuteOneAsync(call, cancellationToken)
+            return await ExecuteCallAsync(call, cancellationToken)
                 .ConfigureAwait(false);
         }
         finally
@@ -117,23 +117,42 @@ public sealed class ToolExecutor : IToolExecutor
         }
     }
 
-    private async Task<ToolResult> ExecuteOneAsync(
+    private async Task<ToolResult> ExecuteCallAsync(
         ToolCall call,
         CancellationToken cancellationToken)
     {
         var tool = _catalog.Find(call.Name)
             ?? throw new ToolNotFoundException();
 
-        var policyResult = await EvaluatePolicyAsync(
+        var decision = await GetInvocationDecisionAsync(
                 call,
                 cancellationToken)
             .ConfigureAwait(false);
 
-        if (policyResult is not null)
+        switch (decision.Action)
         {
-            return CreateResult(call, policyResult);
+            case ToolInvocationAction.Execute:
+                var output = await InvokeToolAsync(
+                        tool,
+                        call,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+                return CreateResult(call, output);
+            case ToolInvocationAction.Reject:
+                var rejectionOutput = decision.RejectionOutput
+                    ?? throw new ToolInvocationRejectedException();
+                return CreateResult(call, rejectionOutput);
+            default:
+                throw new InvalidOperationException(
+                    "The tool invocation policy returned an invalid action.");
         }
+    }
 
+    private async ValueTask<ToolOutput> InvokeToolAsync(
+        ITool tool,
+        ToolCall call,
+        CancellationToken cancellationToken)
+    {
         ToolOutput? output;
 
         try
@@ -170,16 +189,16 @@ public sealed class ToolExecutor : IToolExecutor
                 "A registered tool returned no output.");
         }
 
-        return CreateResult(call, output);
+        return output;
     }
 
-    private async ValueTask<ToolOutput?> EvaluatePolicyAsync(
+    private async ValueTask<ToolInvocationDecision> GetInvocationDecisionAsync(
         ToolCall call,
         CancellationToken cancellationToken)
     {
         if (_invocationPolicy is null)
         {
-            return null;
+            return ToolInvocationDecision.Execute;
         }
 
         var decision = await _invocationPolicy(call, cancellationToken)
@@ -191,15 +210,7 @@ public sealed class ToolExecutor : IToolExecutor
                 "The tool invocation policy returned no decision.");
         }
 
-        return decision.Action switch
-        {
-            ToolInvocationAction.Execute => null,
-            ToolInvocationAction.Reject =>
-                decision.RejectionOutput
-                ?? throw new ToolInvocationRejectedException(),
-            _ => throw new InvalidOperationException(
-                "The tool invocation policy returned an invalid action.")
-        };
+        return decision;
     }
 
     private static ToolResult CreateResult(
