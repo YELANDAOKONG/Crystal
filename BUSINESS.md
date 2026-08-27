@@ -2,14 +2,14 @@
 
 ## Mission
 
-Crystal is a provider-neutral, prompt-neutral, and tool-neutral C# library for
-integrating text models and building inspectable Agents and Agent Harnesses. It
-defines stable protocol contracts and deterministic execution infrastructure
-while leaving models, transport, prompts, tools, policies, and application state
-to external code.
+Crystal is a provider-neutral, prompt-neutral, and tool-neutral C# library
+family for integrating text models and building inspectable Agents and Agent
+Harnesses. It defines stable protocol contracts and deterministic execution
+infrastructure while leaving models, transport, prompts, tools, policies, and
+application state to external code.
 
-Crystal is a library. It does not host an application, expose a service, select
-a model, or own an end-user experience.
+Crystal consists of reusable libraries. It does not host an application, expose
+a service, select a model, or own an end-user experience.
 
 ## Intended users
 
@@ -19,6 +19,17 @@ a model, or own an end-user experience.
 - Agent authors composing model calls and tools under explicit policies.
 - Harness authors coordinating parent and child Agents without a built-in
   routing topology.
+
+## Production assemblies
+
+- Crystal contains provider-adapter contracts and the text protocol foundation.
+- Crystal.Tools adds caller-owned tool registration, policy, and execution.
+- Crystal.Agents adds the bounded model and tool loop.
+- Crystal.Harness adds explicit multi-Agent composition and shared limits.
+
+Consumers reference only the layers required by their use case. A provider
+adapter can implement text-model capabilities without depending on tool
+execution, Agent runtime, or Harness composition.
 
 ## Current capabilities
 
@@ -147,5 +158,5 @@ The text foundation is usable when a developer can:
 5. distinguish normal completion from every configured limit stop;
 6. compose named parent and child Agents under shared Harness budgets;
 7. cancel model, tool, Agent, and Harness work cooperatively; and
-8. consume the production package without receiving a provider, prompt, or
-   concrete tool.
+8. consume only the production assemblies it needs without receiving a provider,
+   prompt, or concrete tool.

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <ItemGroup>
+        <Compile Include="../Crystal/Internal/CollectionSnapshot.cs"
+                 Link="Internal/CollectionSnapshot.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Crystal/Crystal.csproj" />
+        <ProjectReference Include="../Crystal.Tools/Crystal.Tools.csproj" />
+    </ItemGroup>
+
+</Project>

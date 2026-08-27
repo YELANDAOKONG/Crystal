@@ -7,6 +7,11 @@ semantics an external adapter must preserve across current text-model protocols.
 Named services are compatibility evidence only; their names and SDK types must
 not enter Crystal public contracts.
 
+An external provider adapter needs only the Crystal assembly. Model-facing tool
+definitions, calls, and results remain in that assembly so an adapter can
+preserve complete Chat traffic without referencing Crystal.Tools,
+Crystal.Agents, or Crystal.Harness.
+
 The evidence was reviewed against official provider documentation on
 2026-08-23.
 

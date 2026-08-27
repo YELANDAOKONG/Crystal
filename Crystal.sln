@@ -2,6 +2,12 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crystal", "Crystal\Crystal.csproj", "{91FF70ED-B95B-42E1-8720-C2ABFCAFDFBF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crystal.Tools", "Crystal.Tools\Crystal.Tools.csproj", "{41B8253B-C787-4653-9A1E-5265ADA4C631}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crystal.Agents", "Crystal.Agents\Crystal.Agents.csproj", "{0607A319-49F8-4AED-9ECC-E8416199ECFA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crystal.Harness", "Crystal.Harness\Crystal.Harness.csproj", "{94FE9C0C-C932-4B2B-B4BC-A80E8ADDF754}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +18,20 @@ Global
 		{91FF70ED-B95B-42E1-8720-C2ABFCAFDFBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{91FF70ED-B95B-42E1-8720-C2ABFCAFDFBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{91FF70ED-B95B-42E1-8720-C2ABFCAFDFBF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41B8253B-C787-4653-9A1E-5265ADA4C631}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41B8253B-C787-4653-9A1E-5265ADA4C631}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41B8253B-C787-4653-9A1E-5265ADA4C631}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41B8253B-C787-4653-9A1E-5265ADA4C631}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0607A319-49F8-4AED-9ECC-E8416199ECFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0607A319-49F8-4AED-9ECC-E8416199ECFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0607A319-49F8-4AED-9ECC-E8416199ECFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0607A319-49F8-4AED-9ECC-E8416199ECFA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94FE9C0C-C932-4B2B-B4BC-A80E8ADDF754}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94FE9C0C-C932-4B2B-B4BC-A80E8ADDF754}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94FE9C0C-C932-4B2B-B4BC-A80E8ADDF754}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94FE9C0C-C932-4B2B-B4BC-A80E8ADDF754}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 EndGlobal

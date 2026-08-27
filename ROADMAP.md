@@ -26,6 +26,10 @@ baseline. Design documents and code must change together.
 - 2026-08-23: The existing net10.0 target remains unchanged.
 - 2026-08-23: Reasoning stream deltas identify semantic text segments explicitly.
 - 2026-08-23: Agent usage is present only when every model attempt reports it.
+- 2026-08-27: Production code is split into Crystal, Crystal.Tools,
+  Crystal.Agents, and Crystal.Harness with one-way project references.
+- 2026-08-27: Model-facing tool protocol values remain in Crystal so provider
+  adapters do not depend on executable tool infrastructure.
 
 ## Phase 0 — Product and architecture reset
 
@@ -102,6 +106,18 @@ Deliverables:
 
 Exit criteria: callers can compose sequential or concurrent Agent trees while
 the Harness enforces shared limits.
+
+## Architecture refinement — Assembly decomposition
+
+Status: complete.
+
+Deliverables:
+
+- a provider-adapter protocol assembly with no project references;
+- optional Tool, Agent, and Harness runtime assemblies;
+- one-way, acyclic project references;
+- unchanged public namespaces and runtime semantics; and
+- shared build configuration without new package dependencies.
 
 ## Phase 5 — Quality baseline
 

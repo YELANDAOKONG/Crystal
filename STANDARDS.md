@@ -19,9 +19,25 @@
 - Use file-scoped namespaces.
 - Put exactly one type in each file and match the file name to the type name.
 - Keep namespace ownership consistent with ARCHITECTURE.md.
+- Keep assembly ownership and project references consistent with
+  ARCHITECTURE.md.
 - Order using directives with System first, third-party second, and Crystal
   namespaces third, separated when multiple groups exist.
 - Do not use top-level statements.
+
+## Project boundaries
+
+- Crystal contains the provider-adapter protocol foundation and has no project
+  references.
+- Crystal.Tools references only Crystal.
+- Crystal.Agents references Crystal and Crystal.Tools.
+- Crystal.Harness references Crystal and Crystal.Agents.
+- Production project references are one-way and contain no cycle.
+- ToolDefinition, ToolCall, ToolResult, and ToolResultStatus remain in the
+  Crystal assembly even though their namespace is Crystal.Tools.
+- Shared build settings live in Directory.Build.props.
+- CollectionSnapshot is shared as linked internal source. Do not make common
+  implementation helpers public merely to cross an assembly boundary.
 
 ## C# conventions
 
@@ -121,7 +137,8 @@ Tests, once authorized, must prove:
 ## Dependency decision
 
 The existing Newtonsoft.Json, Newtonsoft.Json.Bson, and System.Text.Json package
-references are intentionally retained. The current build may report that the
+references are intentionally retained by the Crystal project. Higher-layer
+projects add no package references. The current build may report that the
 explicit System.Text.Json reference is unnecessary for net10.0; that warning is
 accepted until the dependency decision changes.
 

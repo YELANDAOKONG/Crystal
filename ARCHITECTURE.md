@@ -8,24 +8,56 @@ the design documents and implementation change together.
 
 ## Dependency direction
 
-Crystal initially ships as one production assembly. Namespaces provide logical
-boundaries while the public API stabilizes:
+Crystal ships as four production assemblies with one-way project references:
 
 ~~~text
-Crystal primitives
-    ↑
-Reasoning and text-model protocols
-(Embeddings / Completions / Chat)
-    ↑
-Tool catalog and execution
-    ↑
-Agent runtime
-    ↑
-Harness sessions and explicit Agent composition
+Crystal.Harness
+    ↓
+Crystal.Agents
+    ↓
+Crystal.Tools
+    ↓
+Crystal
 ~~~
 
-External adapters, tools, policies, stores, applications, and orchestration
-topologies depend on Crystal. Crystal never depends on them.
+Crystal.Agents also references Crystal directly. Crystal.Harness also references
+Crystal directly. No production project references a higher layer, and the
+dependency graph contains no cycle.
+
+External adapters depend only on Crystal unless they deliberately use a higher
+runtime layer. External tools, policies, stores, applications, and orchestration
+topologies depend on the lowest layer that contains the capability they need.
+No Crystal assembly depends on external implementations.
+
+## Assembly ownership
+
+### Crystal
+
+Owns cross-capability primitives, Reasoning, Embeddings, Completions, Chat, and
+the model-facing tool protocol values required by Chat: ToolDefinition,
+ToolCall, ToolResult, and ToolResultStatus. Keeping those four values in Crystal
+lets provider adapters represent complete Chat protocol traffic without taking
+a dependency on executable tool infrastructure.
+
+### Crystal.Tools
+
+Owns executable tool contracts, catalogs, scheduling, policies, exception
+mapping, and dispatch. It references Crystal.
+
+### Crystal.Agents
+
+Owns Agent contracts, events, limits, results, and runtime execution. It
+references Crystal and Crystal.Tools.
+
+### Crystal.Harness
+
+Owns Harness contracts, events, reservations, sessions, and explicit Agent
+composition. It references Crystal and Crystal.Agents.
+
+Namespaces continue to express domain ownership. The Crystal.Tools namespace is
+intentionally present in both Crystal and Crystal.Tools because its protocol
+values belong at the adapter boundary while its executable infrastructure is an
+optional higher layer.
 
 ## Namespace ownership
 
@@ -93,6 +125,10 @@ Owns:
 - IToolExecutor and the standard ToolExecutor;
 - explicit serial or bounded-concurrent execution options; and
 - optional caller-supplied invocation approval and exception mapping policies.
+
+ToolDefinition, ToolCall, ToolResult, and ToolResultStatus are compiled into the
+Crystal assembly. The remaining types in this namespace are compiled into the
+Crystal.Tools assembly.
 
 The standard executor preserves input call order in its returned results even
 when calls run concurrently. Unknown tools, rejected calls without a
@@ -211,8 +247,9 @@ No current production type is a placeholder media abstraction.
 
 ## Dependency and serialization boundary
 
-The project currently retains its existing Newtonsoft.Json,
-Newtonsoft.Json.Bson, and System.Text.Json references by explicit user decision.
-Domain contracts carry no provider serialization attributes. Tool schemas use
-System.Text.Json JsonElement, and model-generated tool arguments remain raw text
-until a tool chooses to parse them.
+The Crystal project retains its existing Newtonsoft.Json, Newtonsoft.Json.Bson,
+and System.Text.Json references by explicit user decision. The higher-layer
+projects add only project references. Domain contracts carry no provider
+serialization attributes. Tool schemas use System.Text.Json JsonElement, and
+model-generated tool arguments remain raw text until a tool chooses to parse
+them.
