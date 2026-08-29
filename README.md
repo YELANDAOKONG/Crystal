@@ -4,8 +4,8 @@ Crystal is a provider-neutral C# library for text completion, chat, embeddings,
 tool execution, bounded Agents, and explicit Agent Harness composition.
 
 The current development line is text-only. Multimodal Chat, multimodal Agents,
-and image, audio, and video generation are planned later as additive
-capabilities.
+and image, audio, and video generation are committed future capabilities. They
+will be supported after the text foundation, as additive typed contracts.
 
 ## Design guarantees
 
@@ -282,6 +282,8 @@ become hidden messages.
 
 ## Future media support
 
-Future media work will introduce explicit typed capabilities. The text APIs will
-remain text-only, and the project will not use a generic attachment bag as a
-temporary compatibility shortcut.
+Crystal will support multimodal Chat and Agents, and image, audio, and video
+generation. That work is deferred until the text foundation is usable, and it
+will arrive as explicit typed capabilities rather than placeholders in the
+current assemblies. Existing text APIs will remain text-only. The project will
+not use a generic attachment bag as a temporary compatibility shortcut.
