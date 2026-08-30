@@ -20,13 +20,16 @@ change. Implementation must never become the only source of truth.
 - Crystal is a reusable C#/.NET library, not an application or hosted service.
 - The current release line supports text embedding, text completion, text chat,
   text tool results, Agent execution, and Harness composition.
-- The current release line contains no image, audio, video, attachment, file
-  content, media generation, or generic multimodal content contract.
-- Multimodal chat and Agent support and image, audio, and video generation are
-  committed future directions. Add them as explicit capabilities only when
-  their design phase begins; do not add placeholder media types now.
-- Future media support must be additive. Existing text client and Agent
-  interfaces must remain usable without accepting or returning media.
+- The current release line also supports explicit media sources, typed image,
+  audio, and video values, non-streaming multimodal Chat, Tool, Agent, and
+  Harness families, and immediate image, audio, and video generation clients.
+- Text and multimodal client, Tool, Agent, and Harness contracts are independent.
+  Existing text interfaces remain usable without accepting or returning media.
+- The current release line contains no generic attachment or file-content bag,
+  PDF contract, batch generation, generated-media streaming, resumable generation
+  operation, or realtime media session.
+- Future media lifecycles must remain additive and explicit. Do not add
+  placeholders that reserve names without implemented portable semantics.
 
 ## Non-negotiable invariants
 
@@ -56,12 +59,14 @@ registered-tool output. It may not produce natural-language content for a model.
 - Do not add provider-, vendor-, transport-, or SDK-specific public types.
 - Keep public data contracts immutable and nullable intent explicit.
 - Preserve ordering for messages, completion items, candidates, tool calls,
-  tool results, reasoning items, opaque reasoning state, stream events,
-  embedding inputs, and embedding outputs.
+  tool results, content blocks, generation inputs and outputs, reasoning items,
+  opaque reasoning state, stream events, embedding inputs, and embedding
+  outputs.
 - Every asynchronous operation accepts a CancellationToken. Streaming uses
   IAsyncEnumerable<T>.
 - Runtime messages are plain English and exclude secrets, prompt text, raw tool
-  arguments, reasoning text, opaque state, and stack traces by default.
+  arguments, reasoning text, opaque state, media data, media URIs, and stack
+  traces by default.
 - Use one type per file, file-scoped namespaces, and STANDARDS.md conventions.
 - Do not perform repository history operations unless explicitly requested.
 - Ask before adopting a public business or architectural choice not covered by

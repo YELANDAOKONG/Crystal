@@ -3,8 +3,8 @@
 ## Current direction
 
 Crystal is a new net10.0 library with no compatibility baseline. The current
-development line deliberately focuses on usable text-model integration before
-multimodal or media generation work.
+development line now includes the additive multimodal and immediate media
+generation foundation while preserving every text-only interface.
 
 Large public API changes are allowed while this roadmap reports no preview
 baseline. Design documents and code must change together.
@@ -16,9 +16,7 @@ baseline. Design documents and code must change together.
   surfaces.
 - 2026-08-23: Breaking changes are allowed because no consumer depends on the
   project.
-- 2026-08-23: Current work is text-only.
-- 2026-08-23: Multimodal Chat, multimodal Agents, and image generation are
-  deferred.
+- 2026-08-23: The initial implementation scope was text-only.
 - 2026-08-23: Image, audio, and video capabilities remain committed future
   directions and must be added through explicit additive interfaces.
 - 2026-08-23: Existing JSON package references remain unchanged.
@@ -30,6 +28,19 @@ baseline. Design documents and code must change together.
   Crystal.Agents, and Crystal.Harness with one-way project references.
 - 2026-08-27: Model-facing tool protocol values remain in Crystal so provider
   adapters do not depend on executable tool infrastructure.
+- 2026-08-30: Phase 6 is additive. Existing text interfaces remain unchanged and
+  text-only.
+- 2026-08-30: Multimodal Chat, Tool, Agent, and Harness families are independent
+  from their text counterparts.
+- 2026-08-30: Image, audio, and video generation use independent target-output
+  clients over shared ordered typed inputs. Editing is conditioned generation,
+  not a separate universal lifecycle or mode.
+- 2026-08-30: Video generation can accept audio reference or source inputs when
+  the adapter advertises that capability.
+- 2026-08-30: Portable capability profiles remain coarse. External adapters own
+  conditional model rules and reject unsupported hard requirements.
+- 2026-08-30: Immediate generation, generated-media streaming, resumable remote
+  operations, and realtime sessions remain distinct lifecycles.
 
 ## Phase 0 — Product and architecture reset
 
@@ -136,15 +147,30 @@ Until then, dotnet build Crystal.sln is the executable verification.
 
 ## Phase 6 — Multimodal and media generation
 
-Status: deliberately deferred.
+Status: initial non-streaming and immediate-generation scope complete.
 
-Design order:
+Completed deliverables:
 
-1. define media ownership, lifetime, MIME, URI, and inline-data semantics;
-2. add explicit multimodal Chat capability without changing text IChatClient;
-3. add explicit multimodal Agent capability;
-4. add image generation and editing lifecycles;
-5. extend multimodal and generation contracts for audio; and
-6. extend them for video and long-running generation.
+1. explicit inline-copy, absolute-URI, and replayable-stream media semantics,
+   including optional source expiration;
+2. typed image, audio, and video values with explicit MIME and known metadata;
+3. closed typed multimodal content and coarse input/output capability profiles;
+4. independent non-streaming multimodal Chat and Tool protocol contracts;
+5. independent executable multimodal Tool, Agent, and Harness families;
+6. independent immediate image, audio, and video generation clients;
+7. ordered text, image, audio, video, and reasoning generation output;
+8. typed source, reference, mask, first-frame, last-frame, and audio-for-video
+   inputs; and
+9. portable hard output requirements with adapter-owned rejection semantics.
 
-No Phase 6 placeholder type belongs in the current production assembly.
+Deferred Phase 6 lifecycles:
+
+1. explicit batch-generation submission and result semantics;
+2. modality-specific generated-media streaming and preview semantics;
+3. resumable long-running operation handles, polling, persistence, and explicit
+   remote cancellation semantics;
+4. stateful realtime audio and video sessions; and
+5. automated protocol and runtime tests after a test project is authorized.
+
+No Phase 6 production type may be a placeholder media abstraction, generic
+option bag, provider resource handle, or universal edit mode.

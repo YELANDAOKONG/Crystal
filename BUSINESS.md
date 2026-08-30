@@ -3,18 +3,20 @@
 ## Mission
 
 Crystal is a provider-neutral, prompt-neutral, and tool-neutral C# library
-family for integrating text models and building inspectable Agents and Agent
-Harnesses. It defines stable protocol contracts and deterministic execution
-infrastructure while leaving models, transport, prompts, tools, policies, and
-application state to external code.
+family for integrating text and multimodal models, media generation, and
+building inspectable Agents and Agent Harnesses. It defines stable protocol
+contracts and deterministic execution infrastructure while leaving models,
+transport, prompts, tools, policies, and application state to external code.
 
 Crystal consists of reusable libraries. It does not host an application, expose
 a service, select a model, or own an end-user experience.
 
 ## Intended users
 
-- Provider-adapter authors implementing portable text-model contracts.
-- Application developers using completion, chat, or embedding capabilities.
+- Provider-adapter authors implementing portable text, multimodal, or generation
+  contracts.
+- Application developers using completion, chat, embedding, or media generation
+  capabilities.
 - Tool authors exposing caller-owned capabilities to an Agent.
 - Agent authors composing model calls and tools under explicit policies.
 - Harness authors coordinating parent and child Agents without a built-in
@@ -22,14 +24,17 @@ a service, select a model, or own an end-user experience.
 
 ## Production assemblies
 
-- Crystal contains provider-adapter contracts and the text protocol foundation.
-- Crystal.Tools adds caller-owned tool registration, policy, and execution.
-- Crystal.Agents adds the bounded model and tool loop.
-- Crystal.Harness adds explicit multi-Agent composition and shared limits.
+- Crystal contains provider-adapter contracts, the text and multimodal protocol
+  foundations, media values, and immediate generation clients.
+- Crystal.Tools adds independent text and multimodal tool registration, policy,
+  and execution families.
+- Crystal.Agents adds independent bounded text and multimodal model/tool loops.
+- Crystal.Harness adds independent text and multimodal Agent composition and
+  shared limits.
 
 Consumers reference only the layers required by their use case. A provider
-adapter can implement text-model capabilities without depending on tool
-execution, Agent runtime, or Harness composition.
+adapter can implement text, multimodal, or generation capabilities without
+depending on tool execution, Agent runtime, or Harness composition.
 
 ## Current capabilities
 
@@ -54,6 +59,27 @@ execution, Agent runtime, or Harness composition.
 - Multiple candidates and open-ended finish reasons.
 - Non-streaming and optional typed streaming client contracts.
 
+### Media and multimodal Chat
+
+- Closed portable text, image, audio, and video content modalities.
+- Explicit MIME types and typed image, audio, and video metadata.
+- Immutable inline bytes, caller-owned absolute URIs, and replayable stream
+  factories with explicit ownership and optional expiration metadata.
+- Coarse input and output capabilities that include accepted media source shapes.
+- An independent non-streaming multimodal Chat protocol and client contract.
+- Ordered multimodal messages, reasoning, tool calls, and tool results.
+
+### Immediate media generation
+
+- Independent image, audio, and video generation client contracts.
+- Shared ordered typed text, image, audio, and video inputs with portable
+  instruction, reference, source, mask, first-frame, and last-frame purposes.
+- Editing and transformation represented by conditioned source inputs rather
+  than a universal edit mode.
+- Portable hard output requirements; unsupported requirements must be rejected.
+- Ordered interleaved text, image, audio, video, and reasoning output.
+- Audio references for video generation and explicit embedded-audio presence.
+
 ### Reasoning
 
 - Provider-neutral request hints for mode, effort, visible output, and budget.
@@ -69,6 +95,9 @@ execution, Agent runtime, or Harness composition.
 - Immutable catalogs and explicit serial or concurrent dispatch.
 - Optional caller-owned approval and exception-to-output policies.
 - Textual outputs correlated to model tool calls.
+- A separate multimodal tool family with optional ordered typed call content,
+  ordered typed outputs, and the same
+  explicit approval, exception disclosure, and scheduling choices.
 
 ### Agent
 
@@ -78,6 +107,8 @@ execution, Agent runtime, or Harness composition.
 - Typed events containing exact model requests, responses, and tool results.
 - Exact transcript preservation and explicit stop reasons.
 - Aggregated usage only when every attempted model call reports usage.
+- A separate multimodal Agent family that replays media values exactly and does
+  not fetch, transcode, or cache them.
 
 ### Harness
 
@@ -86,6 +117,8 @@ execution, Agent runtime, or Harness composition.
 - Shared depth, model-call, tool-call, duration, and cancellation boundaries.
 - Invocation ancestry and event forwarding.
 - No built-in router, supervisor prompt, graph, or persistence store.
+- A separate multimodal Harness registry, session, budget, event, and result
+  family.
 
 ## Meaning of neutral
 
@@ -120,10 +153,10 @@ a tool is an explicit caller decision.
 
 The current release does not include:
 
-- multimodal chat or multimodal Agents;
-- image, audio, or video input or output;
-- image, audio, or video generation;
-- binary attachments, PDFs, or general file content;
+- generic binary attachments, PDFs, or general file-content bags;
+- batch submission, generated-media streaming, resumable remote generation
+  operations, or realtime media sessions;
+- automatic URI fetching, media upload, download, transcoding, or caching;
 - built-in providers, authentication, transport, or model catalogs;
 - built-in prompts, personas, templates, repair messages, or summaries;
 - built-in search, filesystem, shell, clock, network, or other concrete tools;
@@ -132,20 +165,21 @@ The current release does not include:
 - automatic retries, context truncation, routing, planning, or side-effect
   approval.
 
-## Future modality direction
+## Current modality boundary
 
-Multimodal and media generation support is planned after the text foundation is
-usable. The compatibility promise is architectural:
+Multimodal and immediate media generation support is additive:
 
 - text-only interfaces remain text-only;
-- future modalities use explicit contracts and capability interfaces;
-- image support arrives before audio and video where practical;
-- audio and video generation and multimodal use remain first-class future
-  capabilities rather than being forced through image or file abstractions; and
-- no current API accepts an untyped media bag merely to reserve a name.
-
-This direction reserves namespace and dependency boundaries, not placeholder
-types or behavior.
+- multimodal Chat, Tool, Agent, and Harness families are independent;
+- image, audio, and video are typed first-class values rather than attachments;
+- generation clients are separated by target output while accepting a shared
+  closed set of typed conditioning inputs;
+- capability profiles state portable individual input and output shapes, while
+  adapters validate model-specific combinations and cardinality;
+- provider options remain on adapter APIs rather than in extension dictionaries;
+  and
+- immediate single-request, batch, streaming, resumable-operation, and realtime
+  lifecycles are not collapsed into one universal generation interface.
 
 ## Acceptance criteria for the text foundation
 

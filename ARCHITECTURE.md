@@ -2,9 +2,9 @@
 
 ## Status
 
-This document is the authoritative architecture for the text-first development
-line. There is no compatibility baseline yet, so public names may change while
-the design documents and implementation change together.
+This document is the authoritative architecture for the current text and
+multimodal development line. There is no compatibility baseline yet, so public
+names may change while the design documents and implementation change together.
 
 ## Dependency direction
 
@@ -33,26 +33,27 @@ No Crystal assembly depends on external implementations.
 
 ### Crystal
 
-Owns cross-capability primitives, Reasoning, Embeddings, Completions, Chat, and
-the model-facing tool protocol values required by Chat: ToolDefinition,
-ToolCall, ToolResult, and ToolResultStatus. Keeping those four values in Crystal
-lets provider adapters represent complete Chat protocol traffic without taking
-a dependency on executable tool infrastructure.
+Owns cross-capability primitives, Reasoning, Embeddings, Completions, text Chat,
+media sources and values, typed multimodal content and Chat, immediate image,
+audio, and video generation, and all model-facing text and multimodal tool
+protocol values. Keeping protocol values in Crystal lets provider adapters
+represent complete traffic without depending on executable tool infrastructure.
 
 ### Crystal.Tools
 
-Owns executable tool contracts, catalogs, scheduling, policies, exception
-mapping, and dispatch. It references Crystal.
+Owns independent text and multimodal executable tool contracts, catalogs,
+scheduling, policies, exception mapping, and dispatch. It references Crystal.
 
 ### Crystal.Agents
 
-Owns Agent contracts, events, limits, results, and runtime execution. It
-references Crystal and Crystal.Tools.
+Owns independent text and multimodal Agent contracts, events, limits, results,
+and runtime execution. It references Crystal and Crystal.Tools.
 
 ### Crystal.Harness
 
-Owns Harness contracts, events, reservations, sessions, and explicit Agent
-composition. It references Crystal and Crystal.Agents.
+Owns independent text and multimodal Harness contracts, events, reservations,
+sessions, and explicit Agent composition. It references Crystal and
+Crystal.Agents.
 
 Namespaces continue to express domain ownership. The Crystal.Tools namespace is
 intentionally present in both Crystal and Crystal.Tools because its protocol
@@ -86,6 +87,59 @@ Opaque state:
 - is never parsed, combined, displayed, logged, or rewritten by Crystal; and
 - is valid only for adapters that explicitly recognize its format.
 
+### Crystal.Media
+
+Owns explicit MIME types, codecs, dimensions, aspect ratios, and typed image,
+audio, and video values. Media data is carried by one of three closed source
+shapes:
+
+- InlineMediaSource owns a private copy and returns copies to callers;
+- UriMediaSource stores an absolute caller-supplied URI that Crystal never
+  resolves or downloads; and
+- ReplayableStreamMediaSource invokes a caller-owned factory for a fresh readable
+  stream on every attempt, with returned-stream ownership transferring to the
+  consumer.
+
+Every source reports optional exact length and expiration metadata. Inline data
+never expires; URI and replayable sources preserve a caller- or adapter-reported
+ExpiresAt value without Crystal refreshing or fetching them.
+
+Media values contain no file paths, provider resource identifiers, transport
+DTOs, or automatic upload/download behavior. MIME is explicit. Optional media
+metadata describes known facts and is not inferred by Crystal.
+
+### Crystal.Multimodal
+
+Owns the closed portable text, image, audio, and video content hierarchy, media
+source-aware content capabilities, and multimodal reasoning content. It also
+owns an independent non-streaming Chat family under Crystal.Multimodal.Chat and
+model-facing multimodal tool calls and results under Crystal.Multimodal.Tools.
+Multimodal tool calls retain exact raw JSON arguments and optional ordered typed
+content; results retain ordered caller-owned typed content.
+
+Multimodal messages preserve ordered typed content blocks. Multimodal reasoning
+preserves ordered readable typed parts, each with an open summary/trace
+classification, plus opaque continuation state. The
+multimodal Chat client advertises coarse individual input and output shapes.
+Role-specific, cardinality, and conditional model rules remain adapter-owned.
+
+### Crystal.Generation
+
+Owns shared ordered typed conditioning inputs, portable input purposes, coarse
+input/output capabilities, and ordered candidate items. Image, audio, and video
+requests, hard requirements, responses, and immediate client interfaces live in
+separate target-output namespaces so their lifecycles can evolve independently.
+
+Generation input purposes are closed portable semantics: instruction, reference,
+source, mask, first frame, and last frame. Image, audio, and video inputs remain
+typed, including audio reference or source inputs supplied to video generation.
+Editing or transformation is conditioned generation through source and mask
+inputs; Crystal has no universal edit mode or edit client.
+
+Requirements are hard constraints. An adapter must reject a requirement or input
+combination it cannot honor and must not silently drop, approximate, reorder,
+download, or transcode it. Provider-only controls belong on adapter APIs.
+
 ### Crystal.Embeddings
 
 Owns ordered text batches, immutable vectors, responses, and IEmbeddingClient.
@@ -111,8 +165,8 @@ ChatItem is a protocol-item boundary. Current built-in natural-language content
 is a ChatMessage containing one text string. Tool calls, tool results, and
 reasoning are protocol items, not content modalities.
 
-Future multimodal chat will use an explicit capability contract. It will not
-silently change IChatClient into a media client.
+Multimodal Chat uses a separate explicit capability contract under
+Crystal.Multimodal.Chat. IChatClient remains unchanged and text-only.
 
 ### Crystal.Tools
 
@@ -127,13 +181,14 @@ Owns:
 - optional caller-supplied invocation approval and exception mapping policies.
 
 ToolDefinition, ToolCall, ToolResult, and ToolResultStatus are compiled into the
-Crystal assembly. The remaining types in this namespace are compiled into the
-Crystal.Tools assembly.
+Crystal assembly. MultimodalToolCall, MultimodalToolResult, and
+MultimodalToolResultStatus are also compiled into Crystal. The executable text
+and multimodal infrastructure is compiled into Crystal.Tools.
 
-The standard executor preserves input call order in its returned results even
-when calls run concurrently. Unknown tools, rejected calls without a
-caller-authored result, and unhandled tool exceptions terminate execution. The
-runtime never writes an error message for the model.
+The standard text and multimodal executors preserve input call order even when
+calls run concurrently. Unknown tools, rejected calls without caller-authored
+output, and unhandled tool exceptions terminate execution. Neither runtime
+writes an error message or media block for the model.
 
 ### Crystal.Agents
 
@@ -168,6 +223,15 @@ IAsyncEnumerable event stream observes turn boundaries and exact protocol
 objects. Direct provider streaming remains available through
 IStreamingChatClient.
 
+The independent Crystal.Multimodal.Agents family applies the same explicit loop
+to IMultimodalChatClient and IMultimodalToolExecutor. Its request, limits,
+selector, events, result, stop reasons, and interface do not widen or inherit the
+text Agent contracts. It replays selected media values exactly. The runtime does
+not open URI sources, inspect media bytes, transcode, upload, download, or cache
+media. IMultimodalAgent exposes the snapshotted input and output capabilities
+of its configured model client. Callers must keep URI and replayable-stream
+sources valid for the entire run.
+
 ### Crystal.Harness
 
 Owns AgentName, registration, Harness limits, sessions, explicit invocations,
@@ -190,6 +254,11 @@ No model output automatically routes to another Agent. Callers build routers,
 graphs, supervisors, handoffs, or peer topologies around the explicit invocation
 boundary.
 
+Crystal.Multimodal.Harness is an independent registry, session, reservation,
+invocation, event, and result family for IMultimodalAgent. Text and multimodal
+Agents cannot be mixed accidentally in one built-in registry. Both families
+apply the same explicit shared-budget and ancestry semantics.
+
 ## Public contract principles
 
 - Public data values are immutable.
@@ -206,8 +275,8 @@ boundary.
 
 ## Streaming semantics
 
-Provider streaming uses typed IAsyncEnumerable<T> events. Candidate and item
-indexes preserve interleaving. Reasoning text deltas additionally carry a
+Current text provider streaming uses typed IAsyncEnumerable<T> events. Candidate
+and item indexes preserve interleaving. Reasoning text deltas additionally carry a
 text-segment index; every delta for one semantic segment uses the same index.
 Identifier, name, argument, text, and reasoning deltas are explicitly identified
 as deltas; adapters must not pretend partial data is complete.
@@ -216,9 +285,15 @@ A complete stream must be aggregatable into the same semantic response as the
 non-streaming operation. Opaque state may be buffered by an adapter and emitted
 as a completed state event.
 
-Agent and Harness streams end with a typed completion event containing the same
-result returned by their non-streaming methods. Consumer cancellation stops
-enumeration and propagates to in-flight model, policy, and tool operations.
+Text and multimodal Agent and Harness streams end with a typed completion event
+containing the same result returned by their non-streaming methods. Consumer
+cancellation stops enumeration and propagates to in-flight model, policy, and
+tool operations.
+
+No generic media streaming contract is implied by immediate generation or
+non-streaming multimodal Chat. Generated-media previews, byte chunks, resumable
+remote operations, and realtime sessions require separate future contracts with
+portable lifecycle semantics.
 
 ## Safety and disclosure
 
@@ -227,23 +302,36 @@ enumeration and propagates to in-flight model, policy, and tool operations.
   tool exception disclosure.
 - No partial tool batch execution caused by a remaining-budget calculation.
 - Concurrent tool execution requires an explicit bounded concurrency setting.
-- Reasoning text, opaque state, raw tool arguments, prompts, and tool exception
-  details are absent from Crystal-authored diagnostics.
+- Reasoning text, opaque state, raw tool arguments, prompts, media bytes, media
+  URIs, and tool exception details are absent from Crystal-authored diagnostics.
 - Policies that create model-visible text are supplied by the caller and their
   returned text is replayed exactly.
 
-## Future multimodal boundary
+## Media and generation boundary
 
-The future media architecture must be additive:
+The current media architecture is additive:
 
 - existing text contracts remain valid and text-only;
-- new capability interfaces advertise multimodal support explicitly;
+- multimodal Chat, Tool, Agent, and Harness APIs are independent families;
 - typed image, audio, and video values replace an untyped attachment bag;
-- large-media ownership and lifetime are designed before binary APIs ship; and
-- generation lifecycles are designed per modality instead of assuming that
-  image, audio, and video operations have identical behavior.
+- inline-copy, absolute-URI, and replayable-stream ownership is explicit;
+- target-output generation clients remain separate;
+- closed typed inputs can condition every generation target when an adapter
+  advertises that shape;
+- a generated video reports embedded-audio presence, while a separately generated
+  audio value remains a distinct ordered output item; and
+- capability profiles are intentionally coarse and never claim to encode every
+  provider model constraint.
 
-No current production type is a placeholder media abstraction.
+Immediate single-request generation, batch submission, generated-media
+streaming, resumable remote operations, and realtime sessions are distinct
+lifecycles. Only immediate single-request generation is in
+the current production contract. Local cancellation cancels waiting and
+in-flight cooperative work; it must not be documented as remote-job cancellation
+when an adapter has already submitted a persistent provider operation.
+
+No production type is a placeholder media abstraction, generic option bag,
+provider resource handle, or universal edit mode.
 
 ## Dependency and serialization boundary
 

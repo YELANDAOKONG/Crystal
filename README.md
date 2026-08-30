@@ -1,11 +1,11 @@
 # Crystal
 
-Crystal is a provider-neutral C# library for text completion, chat, embeddings,
-tool execution, bounded Agents, and explicit Agent Harness composition.
+Crystal is a provider-neutral C# library for text and multimodal model access,
+image, audio, and video generation, tool execution, bounded Agents, and explicit
+Agent Harness composition.
 
-The current development line is text-only. Multimodal Chat, multimodal Agents,
-and image, audio, and video generation are committed future capabilities. They
-will be supported after the text foundation, as additive typed contracts.
+Text and multimodal Chat, Tool, Agent, and Harness APIs are independent. Existing
+text interfaces remain unchanged and text-only.
 
 ## Design guarantees
 
@@ -13,13 +13,16 @@ will be supported after the text foundation, as additive typed contracts.
 - No built-in prompt or runtime-authored model text.
 - No concrete tools.
 - Ordered readable and opaque reasoning preservation.
+- Explicit media ownership, MIME types, and typed modality capabilities.
+- Independent target-output image, audio, and video generation clients.
 - Explicit candidate, tool, approval, limit, and composition policies.
 - Immutable public data contracts.
 
 ## Project status
 
 Crystal targets net10.0 and has no compatibility baseline yet. The current
-repository implements the text foundation described in ROADMAP.md. A test project
+repository implements the text foundation and the initial non-streaming
+multimodal and immediate-generation scope described in ROADMAP.md. A test project
 has not yet been authorized; the executable quality gate is:
 
 ~~~bash
@@ -29,9 +32,9 @@ dotnet build Crystal.sln
 ## Using Crystal
 
 Crystal does not connect to a model provider by itself. An external adapter
-implements one or more of IChatClient, ICompletionClient, IEmbeddingClient, and
-their optional streaming interfaces. Provider selection, model identifiers,
-credentials, temperature, Top-P, and other wire options stay in that adapter.
+implements only the text, multimodal, or generation client interfaces it can
+honor. Provider selection, model identifiers, credentials, temperature, Top-P,
+and other wire options stay in that adapter.
 
 During local development, a consumer can reference the project directly:
 
@@ -86,6 +89,103 @@ public static class ChatExample
 
 The example explicitly selects candidate zero. Applications that request
 multiple candidates must own their selection policy.
+
+### Multimodal Chat
+
+Multimodal Chat is separate from IChatClient. Content blocks are strongly typed,
+ordered, and carry explicit media ownership and MIME information:
+
+~~~csharp
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+using Crystal.Media;
+using Crystal.Multimodal;
+using Crystal.Multimodal.Chat;
+
+namespace Example;
+
+public static class MultimodalChatExample
+{
+    public static Task<MultimodalChatResponse> AskAboutImageAsync(
+        IMultimodalChatClient client,
+        ReadOnlyMemory<byte> pngBytes,
+        string question,
+        CancellationToken cancellationToken)
+    {
+        var image = new ImageMedia(
+            new InlineMediaSource(pngBytes),
+            new MediaMimeType("image/png"));
+        var request = new MultimodalChatRequest(
+        [
+            new MultimodalMessage(
+                MultimodalChatRole.User,
+                [new TextContent(question), new ImageContent(image)])
+        ]);
+
+        return client.CompleteAsync(request, cancellationToken);
+    }
+}
+~~~
+
+Use UriMediaSource only when the adapter advertises URI support; Crystal does not
+download it. URI and replayable sources can report ExpiresAt without Crystal
+refreshing them. ReplayableStreamMediaSource opens a fresh caller-owned stream
+for each attempt, and the consumer disposes each returned stream.
+
+### Image, audio, and video generation
+
+Generation clients are separated by target output. All can accept the same
+closed typed input family when their capability profile advertises it. This
+video example supplies an image first frame and an audio reference:
+
+~~~csharp
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+using Crystal.Generation;
+using Crystal.Generation.Video;
+using Crystal.Media;
+
+namespace Example;
+
+public static class VideoGenerationExample
+{
+    public static Task<VideoGenerationResponse> GenerateAsync(
+        IVideoGenerationClient client,
+        ImageMedia firstFrame,
+        AudioMedia audioReference,
+        string instruction,
+        CancellationToken cancellationToken)
+    {
+        var request = new VideoGenerationRequest(
+        [
+            new GenerationTextInput(instruction),
+            new GenerationImageInput(
+                firstFrame,
+                GenerationInputPurpose.FirstFrame),
+            new GenerationAudioInput(
+                audioReference,
+                GenerationInputPurpose.Reference)
+        ],
+        new VideoGenerationRequirements(
+            aspectRatio: new AspectRatio(16, 9),
+            duration: TimeSpan.FromSeconds(8),
+            audio: VideoAudioRequirement.Required));
+
+        return client.GenerateAsync(request, cancellationToken);
+    }
+}
+~~~
+
+Source and mask inputs express editing or transformation; there is no universal
+edit mode. Output requirements are hard, so an adapter rejects combinations it
+cannot honor. A VideoContent reports embedded-audio presence on VideoMedia; a
+separate AudioContent remains a separate ordered output item. Voice identities,
+pronunciation controls, music styles, and other provider-specific audio options
+stay on adapter APIs.
 
 ### Completion and embeddings
 
@@ -189,6 +289,11 @@ ITool receives exact raw model arguments in ToolCall.Arguments and returns exact
 caller-owned text in ToolOutput. The Agent never repairs either value. Run usage
 is available only when every attempted model call reports usage.
 
+Multimodal tools and Agents use the independent IMultimodalTool,
+IMultimodalToolExecutor, IMultimodalAgent, and MultimodalAgent contracts. They do
+not inherit from or widen the text Tool and Agent families. IMultimodalAgent
+exposes its fixed model input and output capabilities directly.
+
 ### Harness
 
 Register Agents under case-sensitive names, create a bounded session, and invoke
@@ -248,7 +353,7 @@ public static class HarnessExample
 To invoke a child, pass the completed or registered parent invocation identifier
 through AgentInvocationRequest.ParentInvocationId.
 
-Streaming adapters use candidate and item indexes to preserve interleaving.
+Text streaming adapters use candidate and item indexes to preserve interleaving.
 Reasoning text deltas also use TextSegmentIndex so multiple readable segments can
 be reconstructed without treating transport chunks as semantic boundaries.
 
@@ -260,7 +365,7 @@ Start with:
 - ARCHITECTURE.md for ownership and runtime semantics;
 - COMPATIBILITY.md for adapter requirements;
 - STANDARDS.md for engineering rules; and
-- ROADMAP.md for delivery status and deferred multimodal work.
+- ROADMAP.md for delivery status and deferred media lifecycles.
 
 ## Provider adapters
 
@@ -268,7 +373,11 @@ A provider package implements only the capabilities it can preserve:
 
 - IEmbeddingClient for text embeddings;
 - ICompletionClient and optionally IStreamingCompletionClient;
-- IChatClient and optionally IStreamingChatClient.
+- IChatClient and optionally IStreamingChatClient;
+- IMultimodalChatClient with explicit input and output capabilities;
+- IImageGenerationClient for immediate image generation;
+- IAudioGenerationClient for immediate audio generation; and
+- IVideoGenerationClient for immediate video generation.
 
 Provider configuration, model identifiers, wire options, DTOs, and exceptions
 stay in that external package.
@@ -280,10 +389,12 @@ the transcript contains only caller input, selected model output, and exact
 caller-owned tool output. Limits and errors stop the run or throw; they do not
 become hidden messages.
 
-## Future media support
+## Deferred media lifecycles
 
-Crystal will support multimodal Chat and Agents, and image, audio, and video
-generation. That work is deferred until the text foundation is usable, and it
-will arrive as explicit typed capabilities rather than placeholders in the
-current assemblies. Existing text APIs will remain text-only. The project will
-not use a generic attachment bag as a temporary compatibility shortcut.
+The current media scope is non-streaming multimodal Chat and immediate
+single-request image, audio, and video generation. Batch submission,
+generated-media previews or chunks, resumable long-running remote operations,
+explicit remote cancellation, and stateful realtime audio/video sessions require
+separate future contracts. They will not
+be added as modes on the immediate generation clients or as a generic attachment
+bag.
