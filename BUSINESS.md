@@ -66,8 +66,11 @@ depending on tool execution, Agent runtime, or Harness composition.
 - Immutable inline bytes, caller-owned absolute URIs, and replayable stream
   factories with explicit ownership and optional expiration metadata.
 - Coarse input and output capabilities that include accepted media source shapes.
-- An independent non-streaming multimodal Chat protocol and client contract.
+- Independent non-streaming and optional typed streaming multimodal Chat client
+  contracts.
 - Ordered multimodal messages, reasoning, tool calls, and tool results.
+- Stable candidate, item, content-block, and reasoning-part identity in
+  multimodal Chat streams.
 
 ### Immediate media generation
 
@@ -109,6 +112,9 @@ depending on tool execution, Agent runtime, or Harness composition.
 - Aggregated usage only when every attempted model call reports usage.
 - A separate multimodal Agent family that replays media values exactly and does
   not fetch, transcode, or cache them.
+- Multimodal Agents consume provider streams when available, forward exact
+  stream events, and assemble the same complete response used by candidate
+  selection and tool execution.
 
 ### Harness
 

@@ -21,9 +21,9 @@ text interfaces remain unchanged and text-only.
 ## Project status
 
 Crystal targets net10.0 and has no compatibility baseline yet. The current
-repository implements the text foundation and the initial non-streaming
-multimodal and immediate-generation scope described in ROADMAP.md. A test project
-has not yet been authorized; the executable quality gate is:
+repository implements the text foundation, optional typed multimodal Chat
+streaming, and the immediate-generation scope described in ROADMAP.md. A test
+project has not yet been authorized; the executable quality gate is:
 
 ~~~bash
 dotnet build Crystal.sln
@@ -133,6 +133,11 @@ Use UriMediaSource only when the adapter advertises URI support; Crystal does no
 download it. URI and replayable sources can report ExpiresAt without Crystal
 refreshing them. ReplayableStreamMediaSource opens a fresh caller-owned stream
 for each attempt, and the consumer disposes each returned stream.
+
+An adapter may additionally implement IStreamingMultimodalChatClient. Streams
+start messages explicitly, use stable indexes for message content, reasoning
+parts, and tool-call content, and emit image, audio, and video blocks as complete
+typed content events rather than byte chunks.
 
 ### Image, audio, and video generation
 
@@ -374,7 +379,8 @@ A provider package implements only the capabilities it can preserve:
 - IEmbeddingClient for text embeddings;
 - ICompletionClient and optionally IStreamingCompletionClient;
 - IChatClient and optionally IStreamingChatClient;
-- IMultimodalChatClient with explicit input and output capabilities;
+- IMultimodalChatClient and optionally IStreamingMultimodalChatClient, with
+  explicit input and output capabilities;
 - IImageGenerationClient for immediate image generation;
 - IAudioGenerationClient for immediate audio generation; and
 - IVideoGenerationClient for immediate video generation.
@@ -391,10 +397,10 @@ become hidden messages.
 
 ## Deferred media lifecycles
 
-The current media scope is non-streaming multimodal Chat and immediate
-single-request image, audio, and video generation. Batch submission,
-generated-media previews or chunks, resumable long-running remote operations,
-explicit remote cancellation, and stateful realtime audio/video sessions require
-separate future contracts. They will not
+The current media scope includes non-streaming and optional typed streaming
+multimodal Chat plus immediate single-request image, audio, and video generation.
+Batch submission, generated-media previews or chunks, resumable long-running
+remote operations, explicit remote cancellation, and stateful realtime
+audio/video sessions require separate future contracts. They will not
 be added as modes on the immediate generation clients or as a generic attachment
 bag.

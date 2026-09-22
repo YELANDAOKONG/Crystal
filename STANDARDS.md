@@ -77,7 +77,9 @@
 - Do not expose internally mutable arrays, lists, media bytes, or JsonElement
   ownership.
 - Preserve order unless the API explicitly declares otherwise.
-- Reasoning stream deltas identify candidate, item, and text-segment indexes.
+- Text reasoning stream deltas identify candidate, item, and text-segment
+  indexes. Multimodal streams identify candidate, item, message-content,
+  reasoning-part, and tool-call-content indexes as applicable.
 - Keep provider-originated values open rather than forcing lossy enums.
 - Use named policy types instead of ambiguous public booleans.
 - Avoid ref and out except standard Try patterns.
@@ -164,6 +166,10 @@ Tests, once authorized, must prove:
 - Context overflow is surfaced; Crystal does not truncate or summarize.
 - Multimodal Agent replay preserves media values and relies on caller-maintained
   URI and replayable-stream validity for the complete run.
+- A multimodal Agent prefers IStreamingMultimodalChatClient when available,
+  forwards exact provider events, and assembles the complete response before
+  candidate selection. Invalid or incomplete streams fail without synthesized
+  model content.
 
 ## Harness execution
 

@@ -112,8 +112,9 @@ metadata describes known facts and is not inferred by Crystal.
 
 Owns the closed portable text, image, audio, and video content hierarchy, media
 source-aware content capabilities, and multimodal reasoning content. It also
-owns an independent non-streaming Chat family under Crystal.Multimodal.Chat and
-model-facing multimodal tool calls and results under Crystal.Multimodal.Tools.
+owns an independent non-streaming and optional typed streaming Chat family under
+Crystal.Multimodal.Chat and model-facing multimodal tool calls and results under
+Crystal.Multimodal.Tools.
 Multimodal tool calls retain exact raw JSON arguments and optional ordered typed
 content; results retain ordered caller-owned typed content.
 
@@ -226,11 +227,15 @@ IStreamingChatClient.
 The independent Crystal.Multimodal.Agents family applies the same explicit loop
 to IMultimodalChatClient and IMultimodalToolExecutor. Its request, limits,
 selector, events, result, stop reasons, and interface do not widen or inherit the
-text Agent contracts. It replays selected media values exactly. The runtime does
-not open URI sources, inspect media bytes, transcode, upload, download, or cache
-media. IMultimodalAgent exposes the snapshotted input and output capabilities
-of its configured model client. Callers must keep URI and replayable-stream
-sources valid for the entire run.
+text Agent contracts. When the configured client also implements
+IStreamingMultimodalChatClient, the Agent forwards every exact client stream
+event, assembles a semantically equivalent complete response, and then applies
+the same candidate-selection and tool-execution path. Otherwise it uses the
+non-streaming operation. It replays selected media values exactly. The runtime
+does not open URI sources, inspect media bytes, transcode, upload, download, or
+cache media. IMultimodalAgent exposes the snapshotted input and output
+capabilities of its configured model client. Callers must keep URI and
+replayable-stream sources valid for the entire run.
 
 ### Crystal.Harness
 
@@ -275,11 +280,19 @@ apply the same explicit shared-budget and ancestry semantics.
 
 ## Streaming semantics
 
-Current text provider streaming uses typed IAsyncEnumerable<T> events. Candidate
-and item indexes preserve interleaving. Reasoning text deltas additionally carry a
-text-segment index; every delta for one semantic segment uses the same index.
+Text and multimodal provider streaming use typed IAsyncEnumerable<T> events.
+Candidate and item indexes preserve interleaving. Text reasoning deltas
+additionally carry a text-segment index; every delta for one semantic segment
+uses the same index. Multimodal message content, reasoning parts, and tool-call
+content carry stable zero-based indexes. A message-started event preserves its
+role and permits an empty content sequence. Text blocks may arrive as exact
+deltas or as one complete content event. Image, audio, and video arrive as one
+complete content event; this contract does not stream media bytes.
+
 Identifier, name, argument, text, and reasoning deltas are explicitly identified
-as deltas; adapters must not pretend partial data is complete.
+as deltas; adapters must not pretend partial data is complete. A content-received
+event is explicitly complete and cannot be combined with text deltas at the same
+content or reasoning-part index.
 
 A complete stream must be aggregatable into the same semantic response as the
 non-streaming operation. Opaque state may be buffered by an adapter and emitted
@@ -290,10 +303,10 @@ containing the same result returned by their non-streaming methods. Consumer
 cancellation stops enumeration and propagates to in-flight model, policy, and
 tool operations.
 
-No generic media streaming contract is implied by immediate generation or
-non-streaming multimodal Chat. Generated-media previews, byte chunks, resumable
-remote operations, and realtime sessions require separate future contracts with
-portable lifecycle semantics.
+Multimodal Chat streaming describes the delivery of typed Chat content; it does
+not imply a generic media-byte stream. Generated-media previews, byte chunks,
+resumable remote operations, and realtime sessions require separate future
+contracts with portable lifecycle semantics.
 
 ## Safety and disclosure
 

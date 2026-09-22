@@ -15,6 +15,7 @@ public sealed class MultimodalAgent : IMultimodalAgent
 {
     private readonly MultimodalChatCandidateSelector _candidateSelector;
     private readonly IMultimodalChatClient _client;
+    private readonly IStreamingMultimodalChatClient? _streamingClient;
     private readonly IMultimodalToolExecutor? _toolExecutor;
 
     /// <summary>Initializes a multimodal Agent.</summary>
@@ -40,6 +41,7 @@ public sealed class MultimodalAgent : IMultimodalAgent
                 "The multimodal Chat client returned no capabilities.",
                 nameof(client));
         _client = client;
+        _streamingClient = client as IStreamingMultimodalChatClient;
         _candidateSelector = candidateSelector;
         _toolExecutor = toolExecutor;
     }
@@ -132,32 +134,106 @@ public sealed class MultimodalAgent : IMultimodalAgent
                 modelCallCount,
                 chatRequest);
 
-            var modelOperation = await ExecuteOperationAsync(
-                    token => _client.CompleteAsync(chatRequest, token),
-                    cancellationToken,
-                    durationSource.Token,
-                    operationSource.Token)
-                .ConfigureAwait(false);
-
-            if (modelOperation.TimedOut)
+            MultimodalChatResponse response;
+            if (_streamingClient is null)
             {
-                usage.Add(null);
-                yield return new MultimodalAgentRunCompletedEvent(
-                    request.RunId,
-                    sequence,
-                    CreateResult(
-                        request,
-                        transcript,
-                        MultimodalAgentRunStopReason.DurationLimitReached,
-                        modelCallCount,
-                        toolCallCount,
-                        usage));
-                yield break;
+                var modelOperation = await ExecuteOperationAsync(
+                        token => _client.CompleteAsync(chatRequest, token),
+                        cancellationToken,
+                        durationSource.Token,
+                        operationSource.Token)
+                    .ConfigureAwait(false);
+
+                if (modelOperation.TimedOut)
+                {
+                    usage.Add(null);
+                    yield return new MultimodalAgentRunCompletedEvent(
+                        request.RunId,
+                        sequence,
+                        CreateResult(
+                            request,
+                            transcript,
+                            MultimodalAgentRunStopReason.DurationLimitReached,
+                            modelCallCount,
+                            toolCallCount,
+                            usage));
+                    yield break;
+                }
+
+                response = modelOperation.Value
+                    ?? throw new InvalidOperationException(
+                        "The multimodal Chat client returned no response.");
+            }
+            else
+            {
+                var assembler = new MultimodalChatStreamAssembler();
+                var timedOut = false;
+                var enumerator = _streamingClient
+                    .StreamAsync(chatRequest, operationSource.Token)
+                    .GetAsyncEnumerator(operationSource.Token);
+
+                try
+                {
+                    while (true)
+                    {
+                        var moveOperation = await ExecuteMoveNextAsync(
+                                enumerator,
+                                cancellationToken,
+                                durationSource.Token)
+                            .ConfigureAwait(false);
+
+                        if (moveOperation.TimedOut)
+                        {
+                            timedOut = true;
+                            break;
+                        }
+
+                        if (!moveOperation.Value)
+                        {
+                            break;
+                        }
+
+                        var streamEvent = enumerator.Current
+                            ?? throw new InvalidOperationException(
+                                "The multimodal Chat client streamed no event value.");
+                        assembler.Apply(streamEvent);
+
+                        yield return new MultimodalAgentModelStreamEvent(
+                            request.RunId,
+                            sequence++,
+                            modelCallCount,
+                            streamEvent);
+                    }
+                }
+                finally
+                {
+                    var disposeOperation = await ExecuteDisposeAsync(
+                            enumerator,
+                            cancellationToken,
+                            durationSource.Token)
+                        .ConfigureAwait(false);
+                    timedOut |= disposeOperation.TimedOut;
+                }
+
+                if (timedOut)
+                {
+                    usage.Add(null);
+                    yield return new MultimodalAgentRunCompletedEvent(
+                        request.RunId,
+                        sequence,
+                        CreateResult(
+                            request,
+                            transcript,
+                            MultimodalAgentRunStopReason.DurationLimitReached,
+                            modelCallCount,
+                            toolCallCount,
+                            usage));
+                    yield break;
+                }
+
+                response = assembler.ToResponse();
             }
 
-            var response = modelOperation.Value
-                ?? throw new InvalidOperationException(
-                    "The multimodal Chat client returned no response.");
             usage.Add(response.Usage);
 
             yield return new MultimodalAgentModelResponseEvent(
@@ -329,6 +405,42 @@ public sealed class MultimodalAgent : IMultimodalAgent
                 && durationToken.IsCancellationRequested)
         {
             return AgentOperationResult<T>.Timeout();
+        }
+    }
+
+    private static async Task<AgentOperationResult<bool>> ExecuteMoveNextAsync(
+        IAsyncEnumerator<MultimodalChatStreamEvent> enumerator,
+        CancellationToken callerToken,
+        CancellationToken durationToken)
+    {
+        try
+        {
+            var hasNext = await enumerator.MoveNextAsync().ConfigureAwait(false);
+            return AgentOperationResult<bool>.Success(hasNext);
+        }
+        catch (OperationCanceledException)
+            when (!callerToken.IsCancellationRequested
+                && durationToken.IsCancellationRequested)
+        {
+            return AgentOperationResult<bool>.Timeout();
+        }
+    }
+
+    private static async Task<AgentOperationResult<bool>> ExecuteDisposeAsync(
+        IAsyncEnumerator<MultimodalChatStreamEvent> enumerator,
+        CancellationToken callerToken,
+        CancellationToken durationToken)
+    {
+        try
+        {
+            await enumerator.DisposeAsync().ConfigureAwait(false);
+            return AgentOperationResult<bool>.Success(true);
+        }
+        catch (OperationCanceledException)
+            when (!callerToken.IsCancellationRequested
+                && durationToken.IsCancellationRequested)
+        {
+            return AgentOperationResult<bool>.Timeout();
         }
     }
 

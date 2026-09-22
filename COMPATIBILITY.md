@@ -15,7 +15,7 @@ Crystal.Agents, or Crystal.Harness.
 
 The text and reasoning evidence was reviewed against official provider
 documentation on 2026-08-23. Multimodal and generation evidence was reviewed on
-2026-08-30.
+2026-08-30, with multimodal Chat streaming reviewed on 2026-09-22.
 
 ## Common capability rule
 
@@ -122,7 +122,10 @@ An adapter must:
 14. advertise only portable input and output shapes it can honor;
 15. reject unsupported generation requirements and conditional combinations; and
 16. keep provider billing fields, media handles, model identifiers, and options
-    outside portable results.
+    outside portable results;
+17. assign stable zero-based indexes to multimodal message content, reasoning
+    parts, and tool-call content throughout a stream; and
+18. emit media content as complete typed content rather than media-byte deltas.
 
 ## Text and multimodal profiles
 
@@ -131,11 +134,20 @@ provider mode whose readable output can be represented by text Chat items or
 reject an unsupported media response. Binary data must never be smuggled through
 text or opaque reasoning state.
 
-IMultimodalChatClient is a separate profile. It can preserve readable text, image,
-audio, and video reasoning content plus opaque continuation state. An adapter
-must advertise the individual input and output modalities and media source shapes
-it supports. It must still validate provider-specific role, combination, and
-cardinality rules for each request.
+IMultimodalChatClient is a separate profile. It can preserve readable text,
+image, audio, and video reasoning content plus opaque continuation state.
+IStreamingMultimodalChatClient adds optional typed streaming without changing
+that complete-response contract. An adapter must advertise the individual input
+and output modalities and media source shapes it supports. It must still validate
+provider-specific role, combination, and cardinality rules for each request.
+
+A multimodal stream starts each message explicitly so its role and an empty
+content sequence remain representable. Text content may be emitted as deltas.
+Complete content events carry one exact TextContent, ImageContent, AudioContent,
+or VideoContent value and cannot be mixed with text deltas at the same index.
+Reasoning parts use the same rule and retain their classification. Tool-call
+identifier, name, and raw arguments remain deltas, while optional tool-call
+content arrives as complete indexed content blocks.
 
 ## Media source compatibility
 
@@ -190,6 +202,8 @@ cardinality rules for each request.
   a valid intermediate model outcome.
 - Streaming identifier, name, and argument fields are deltas and preserve their
   arrival order.
+- Streaming multimodal tool-call content uses stable indexes and complete typed
+  content events; it is not a media-byte stream.
 - Text tool results are textual and correlated by the exact model call
   identifier. Multimodal tool calls preserve exact raw argument text plus
   optional ordered typed content; results preserve ordered typed content and use

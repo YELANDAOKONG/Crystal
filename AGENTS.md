@@ -21,8 +21,9 @@ change. Implementation must never become the only source of truth.
 - The current release line supports text embedding, text completion, text chat,
   text tool results, Agent execution, and Harness composition.
 - The current release line also supports explicit media sources, typed image,
-  audio, and video values, non-streaming multimodal Chat, Tool, Agent, and
-  Harness families, and immediate image, audio, and video generation clients.
+  audio, and video values, non-streaming and optional typed streaming
+  multimodal Chat, Tool, Agent, and Harness families, and immediate image,
+  audio, and video generation clients.
 - Text and multimodal client, Tool, Agent, and Harness contracts are independent.
   Existing text interfaces remain usable without accepting or returning media.
 - The current release line contains no generic attachment or file-content bag,

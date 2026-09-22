@@ -41,6 +41,10 @@ baseline. Design documents and code must change together.
   conditional model rules and reject unsupported hard requirements.
 - 2026-08-30: Immediate generation, generated-media streaming, resumable remote
   operations, and realtime sessions remain distinct lifecycles.
+- 2026-09-22: Multimodal Chat gains an optional typed streaming contract.
+  Message text is incremental; other typed content is delivered complete.
+  Multimodal Agent forwards provider events and assembles the complete response
+  before candidate selection and tool execution.
 
 ## Phase 0 — Product and architecture reset
 
@@ -147,7 +151,8 @@ Until then, dotnet build Crystal.sln is the executable verification.
 
 ## Phase 6 — Multimodal and media generation
 
-Status: initial non-streaming and immediate-generation scope complete.
+Status: multimodal Chat, optional Chat streaming, and immediate-generation scope
+complete.
 
 Completed deliverables:
 
@@ -155,13 +160,17 @@ Completed deliverables:
    including optional source expiration;
 2. typed image, audio, and video values with explicit MIME and known metadata;
 3. closed typed multimodal content and coarse input/output capability profiles;
-4. independent non-streaming multimodal Chat and Tool protocol contracts;
+4. independent non-streaming and optional typed streaming multimodal Chat plus
+   multimodal Tool protocol contracts;
 5. independent executable multimodal Tool, Agent, and Harness families;
 6. independent immediate image, audio, and video generation clients;
 7. ordered text, image, audio, video, and reasoning generation output;
 8. typed source, reference, mask, first-frame, last-frame, and audio-for-video
-   inputs; and
-9. portable hard output requirements with adapter-owned rejection semantics.
+   inputs;
+9. portable hard output requirements with adapter-owned rejection semantics;
+10. lossless streaming indexes for messages, reasoning parts, and tool-call
+    content, with complete typed media events; and
+11. multimodal Agent stream forwarding and complete-response assembly.
 
 Deferred Phase 6 lifecycles:
 
