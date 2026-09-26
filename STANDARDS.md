@@ -185,6 +185,13 @@ Tests must prove:
   configured limit, while finite values retain their current validation and
   accounting. An unlimited duration creates no timer, but cancellation still
   propagates.
+- Text and multimodal Agents check caller cancellation at run and event
+  boundaries and after awaited client work. An ignored token must not turn
+  observed cancellation into a normal completion or a forwarded stream event.
+- Finite Agent duration is checked before and after operations, after stream
+  moves and disposal, and after event yields. Late client output cannot become
+  a normal completion or forwarded stream event. Duration stops are data;
+  caller cancellation takes precedence over an expired duration.
 - Agent usage is null unless every attempted model call reports usage.
 - Context overflow is surfaced; Crystal does not truncate or summarize.
 - A text Agent prefers IStreamingChatClient when available, forwards exact

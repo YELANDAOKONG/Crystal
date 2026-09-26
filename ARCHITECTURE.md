@@ -285,6 +285,21 @@ IChatClient responses. Invalid or incomplete streams fail without appending
 partial model content to the transcript. Both paths preserve the same Agent
 limits, tool ordering, and usage rules.
 
+Both Agent families check caller cancellation before starting a model turn,
+after yielding a transition before continuing work, and after awaited client
+or policy work returns. A client that ignores the token cannot turn an
+observed cancellation into a completed run. Streamed events returned after
+observed caller cancellation are not forwarded; no completion event is
+synthesized for caller cancellation.
+
+Finite Agent duration is checked at the same operation and event boundaries.
+An operation or stream event returned after the duration expires is discarded,
+and the run reports DurationLimitReached. Pausing enumeration after a model
+request or candidate selection cannot start subsequent work or report normal
+completion after expiry. A client that ignores its cancellation token may delay
+the stop until it returns; the timer does not forcibly interrupt it. Caller
+cancellation takes precedence when both signals are observed.
+
 The independent Crystal.Multimodal.Agents family applies the same explicit loop
 to IMultimodalChatClient and IMultimodalToolExecutor. Its request, limits,
 selector, events, result, stop reasons, and interface do not widen or inherit the

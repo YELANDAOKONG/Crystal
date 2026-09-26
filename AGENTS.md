@@ -10,7 +10,6 @@ Read these documents before changing production code:
 2. ARCHITECTURE.md defines component ownership and runtime semantics.
 3. COMPATIBILITY.md defines the external provider-adapter contract.
 4. STANDARDS.md defines coding, API, dependency, and verification rules.
-5. ROADMAP.md defines implementation order and current status.
 
 When a design decision changes, update the relevant document in the same
 change. Implementation must never become the only source of truth.

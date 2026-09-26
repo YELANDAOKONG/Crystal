@@ -88,6 +88,7 @@ public sealed class Agent : IAgent
 
         while (true)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (durationSource.IsCancellationRequested)
             {
                 var durationResult = CreateResult(
@@ -134,6 +135,22 @@ public sealed class Agent : IAgent
                 sequence++,
                 modelCallCount,
                 chatRequest);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (durationSource.IsCancellationRequested)
+            {
+                usage.Add(null);
+                yield return new AgentRunCompletedEvent(
+                    request.RunId,
+                    sequence,
+                    CreateResult(
+                        request,
+                        transcript,
+                        AgentRunStopReason.DurationLimitReached,
+                        modelCallCount,
+                        toolCallCount,
+                        usage));
+                yield break;
+            }
 
             ChatResponse response;
             if (_streamingClient is null)
@@ -216,6 +233,9 @@ public sealed class Agent : IAgent
                     timedOut |= disposeOperation.TimedOut;
                 }
 
+                cancellationToken.ThrowIfCancellationRequested();
+                timedOut |= durationSource.IsCancellationRequested;
+
                 if (timedOut)
                 {
                     usage.Add(null);
@@ -285,6 +305,21 @@ public sealed class Agent : IAgent
                 modelCallCount,
                 selectedCandidateIndex,
                 candidate);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (durationSource.IsCancellationRequested)
+            {
+                yield return new AgentRunCompletedEvent(
+                    request.RunId,
+                    sequence,
+                    CreateResult(
+                        request,
+                        transcript,
+                        AgentRunStopReason.DurationLimitReached,
+                        modelCallCount,
+                        toolCallCount,
+                        usage));
+                yield break;
+            }
 
             var toolCalls = candidate.Items
                 .OfType<ToolCall>()
@@ -403,7 +438,19 @@ public sealed class Agent : IAgent
     {
         try
         {
+            callerToken.ThrowIfCancellationRequested();
+            if (durationToken.IsCancellationRequested)
+            {
+                return AgentOperationResult<T>.Timeout();
+            }
+
             var value = await operation(operationToken).ConfigureAwait(false);
+            callerToken.ThrowIfCancellationRequested();
+            if (durationToken.IsCancellationRequested)
+            {
+                return AgentOperationResult<T>.Timeout();
+            }
+
             return AgentOperationResult<T>.Success(value);
         }
         catch (OperationCanceledException)
@@ -421,7 +468,19 @@ public sealed class Agent : IAgent
     {
         try
         {
+            callerToken.ThrowIfCancellationRequested();
+            if (durationToken.IsCancellationRequested)
+            {
+                return AgentOperationResult<bool>.Timeout();
+            }
+
             var hasNext = await enumerator.MoveNextAsync().ConfigureAwait(false);
+            callerToken.ThrowIfCancellationRequested();
+            if (durationToken.IsCancellationRequested)
+            {
+                return AgentOperationResult<bool>.Timeout();
+            }
+
             return AgentOperationResult<bool>.Success(hasNext);
         }
         catch (OperationCanceledException)

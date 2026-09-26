@@ -27,7 +27,7 @@ text interfaces remain unchanged and text-only.
 Crystal targets net10.0 and has no compatibility baseline yet. The current
 repository implements the text foundation, optional typed multimodal Chat
 streaming, the immediate-generation scope, and an independent operation
-pipeline library described in ROADMAP.md. The current quality checks are:
+pipeline library. The current quality checks are:
 
 ~~~bash
 dotnet build Crystal.sln
@@ -362,7 +362,11 @@ caller policy returns; a started tool's side effects remain caller-owned.
 
 AgentRunLimits accepts a finite maximum or `null` for each model-call,
 tool-call, and duration budget. `AgentRunLimits.Unlimited` removes all three
-configured bounds while caller cancellation still applies.
+configured bounds while caller cancellation still applies. Agent checks caller
+cancellation between events and after client work, even if the client ignores
+the token it received. A finite duration is also checked at those boundaries:
+late client output is discarded and the run reports DurationLimitReached once
+the client returns. A client that ignores cancellation can delay that report.
 
 Multimodal tools and Agents use the independent IMultimodalTool,
 IMultimodalToolExecutor, IMultimodalAgent, and MultimodalAgent contracts. They do
@@ -443,8 +447,7 @@ Start with:
 - BUSINESS.md for product scope;
 - ARCHITECTURE.md for ownership and runtime semantics;
 - COMPATIBILITY.md for adapter requirements;
-- STANDARDS.md for engineering rules; and
-- ROADMAP.md for delivery status and deferred media lifecycles.
+- STANDARDS.md for engineering rules.
 
 ## Provider adapters
 
