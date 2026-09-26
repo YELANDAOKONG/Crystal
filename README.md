@@ -78,6 +78,13 @@ terminal status, and elapsed time. Stream timing spans enumeration through
 disposal. Observations contain no request, response, event, or exception data;
 the caller supplies an observer and any telemetry sink.
 
+`Crystal.ClientPipelines` provides `ClientPipelineFactory` for wrapping the
+current Chat, Completion, Embedding, multimodal Chat, and immediate-generation
+clients. The wrapper keeps optional streaming support and capability profiles.
+For example, `ClientPipelineFactory.ForChat(client, middleware)` returns an
+`IStreamingChatClient` at runtime when `client` supports streaming. Supplying
+stream middleware to a non-streaming client is rejected during construction.
+
 ## Using Crystal
 
 Crystal does not connect to a model provider by itself. An external adapter

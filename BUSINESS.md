@@ -36,6 +36,9 @@ library's public API.
 - Crystal.Pipelines adds type-safe, caller-owned asynchronous operation and
   streaming middleware composition without depending on a particular model,
   tool, or provider contract.
+- Crystal.ClientPipelines adapts current provider-neutral client families to
+  those pipelines while preserving their supported interfaces and capability
+  profiles.
 
 Consumers reference only the layers required by their use case. A provider
 adapter can implement text, multimodal, or generation capabilities without
@@ -142,6 +145,9 @@ depending on tool execution, Agent runtime, or Harness composition.
   caller-owned middleware explicitly changes it.
 - Opt-in timing and outcome observations without request, response, event, or
   exception payloads; the observer and its sink remain caller-owned.
+- Typed wrappers for Chat, Completion, Embedding, multimodal Chat, and immediate
+  image, audio, and video generation. A wrapper exposes streaming only when its
+  underlying client does.
 
 ## Meaning of neutral
 

@@ -8,8 +8,9 @@ names may change while the design documents and implementation change together.
 
 ## Dependency direction
 
-Crystal currently ships five production assemblies. Four form a one-way
-runtime dependency chain; Crystal.Pipelines is an independent library:
+Crystal currently ships six production assemblies. Four form a one-way
+runtime dependency chain; Crystal.Pipelines is independent and
+Crystal.ClientPipelines depends only on the protocol and generic pipeline layers:
 
 ~~~text
 Crystal.Harness
@@ -21,6 +22,8 @@ Crystal.Tools
 Crystal
 
 Crystal.Pipelines (no project references)
+
+Crystal.ClientPipelines → Crystal + Crystal.Pipelines
 ~~~
 
 Crystal.Agents also references Crystal directly. Crystal.Harness also references
@@ -70,6 +73,17 @@ start or terminal status, and elapsed time. Stream timing begins on enumeration
 and ends on completion, cancellation, failure, or early disposal. Observer
 callbacks are caller-owned and their exceptions propagate. Crystal provides no
 telemetry exporter or backend.
+
+### Crystal.ClientPipelines
+
+Owns typed adapters that apply generic middleware to provider-neutral Chat,
+Completion, Embedding, multimodal Chat, and immediate image, audio, and video
+generation clients. It references Crystal and Crystal.Pipelines, without a
+dependency on executable Tools, Agents, or Harnesses. Wrapping preserves the
+client's declared capability object and optional streaming interface. Supplying
+stream middleware to a client without streaming support fails at construction.
+The adapters forward exact requests, responses, events, and cancellation tokens
+unless caller-supplied middleware explicitly changes them.
 
 Namespaces continue to express domain ownership. The Crystal.Tools namespace is
 intentionally present in both Crystal and Crystal.Tools because its protocol

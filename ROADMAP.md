@@ -205,8 +205,8 @@ Deliverables:
    middleware with safe default disclosure.
 
 Current progress: operation and streaming middleware, content-free timing and
-outcome diagnostics, and their behavioral tests are implemented. Typed client
-adapters and general policy middleware remain open.
+outcome diagnostics, typed adapters for all current client families, and their
+behavioral tests are implemented. General policy middleware remains open.
 
 Exit criteria: callers can compose cross-cutting behavior around supported
 operations without a provider dependency or Crystal-authored model text.

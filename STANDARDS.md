@@ -35,6 +35,9 @@
 - Crystal.Harness references Crystal and Crystal.Agents.
 - Crystal.Pipelines has no project references and remains usable for any typed
   asynchronous request/response or event stream.
+- Crystal.ClientPipelines references only Crystal and Crystal.Pipelines. It
+  preserves each wrapped client's optional streaming interface and capability
+  profile; unsupported streaming middleware is rejected.
 - Production project references are one-way and contain no cycle.
 - Text and multimodal model-facing tool protocol values remain in Crystal even
   though executable tool infrastructure belongs to Crystal.Tools.

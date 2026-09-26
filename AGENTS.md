@@ -33,6 +33,8 @@ change. Implementation must never become the only source of truth.
   operation, or realtime media session.
 - Crystal.Pipelines is an independent, generic middleware library for typed
   asynchronous operations and event streams.
+- Crystal.ClientPipelines applies those pipelines to current client contracts
+  without widening their portable capability or streaming support.
 - Session storage and recovery across process lifetimes belong to callers.
   Crystal does not own a durable session store or checkpoint restoration.
 - Future media lifecycles must remain additive and explicit. Do not add
