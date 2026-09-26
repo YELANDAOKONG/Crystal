@@ -220,10 +220,14 @@ Crystal assembly. MultimodalToolCall, MultimodalToolResult, and
 MultimodalToolResultStatus are also compiled into Crystal. The executable text
 and multimodal infrastructure is compiled into Crystal.Tools.
 
-The standard text and multimodal executors preserve input call order even when
-calls run concurrently. Unknown tools, rejected calls without caller-authored
-output, and unhandled tool exceptions terminate execution. Neither runtime
-writes an error message or media block for the model.
+The standard text and multimodal executors check every call name against the
+immutable catalog before starting any call in a batch, whether dispatch is
+serial or concurrent. They preserve input result order even when calls run
+concurrently. Unknown tools, rejected calls without caller-authored output,
+and unhandled tool exceptions terminate execution. A later approval rejection
+or tool failure may occur after earlier calls have started; the preflight
+guarantee concerns registration only. Neither runtime writes an error message
+or media block for the model.
 
 ### Crystal.Agents
 

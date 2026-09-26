@@ -91,6 +91,7 @@ Deliverables:
 
 - executable caller-owned tools;
 - immutable case-sensitive catalog;
+- registration preflight for complete text and multimodal batches;
 - explicit serial and bounded-concurrent execution;
 - ordered correlation of results;
 - optional caller-owned approval; and
@@ -156,9 +157,10 @@ Deliverables:
 - establish the first public compatibility baseline.
 
 Current progress: the xUnit suite covers generic pipelines, client wrappers,
-text and multimodal Agent streaming, media-source ownership, and text Harness
-ancestry and shared-budget behavior. The compatibility baseline, package
-metadata, CI, and broader contract coverage remain open.
+text and multimodal Agent streaming, media-source ownership, text Harness
+ancestry and shared-budget behavior, and text/multimodal tool registration
+preflight. The compatibility baseline, package metadata, CI, and broader
+contract coverage remain open.
 
 Until the suite covers existing contracts, the solution build remains the
 repository-wide verification gate.

@@ -47,6 +47,7 @@ public sealed class ToolExecutor : IToolExecutor
         CancellationToken cancellationToken = default)
     {
         var snapshot = CollectionSnapshot.Create(calls, nameof(calls));
+        EnsureToolsRegistered(snapshot);
 
         return _options.Mode switch
         {
@@ -59,6 +60,17 @@ public sealed class ToolExecutor : IToolExecutor
             _ => throw new InvalidOperationException(
                 "The configured tool execution mode is invalid.")
         };
+    }
+
+    private void EnsureToolsRegistered(IReadOnlyList<ToolCall> calls)
+    {
+        foreach (var call in calls)
+        {
+            if (_catalog.Find(call.Name) is null)
+            {
+                throw new ToolNotFoundException();
+            }
+        }
     }
 
     private async Task<IReadOnlyList<ToolResult>> ExecuteSerialAsync(

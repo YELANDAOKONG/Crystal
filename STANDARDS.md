@@ -162,6 +162,9 @@ Tests must prove:
 - Text and multimodal Agent, Tool, and Harness public families remain independent.
 - Candidate selection is caller-supplied.
 - Tool execution mode and concurrency are explicit.
+- Validate the complete tool batch against the immutable catalog before any
+  text or multimodal tool invocation starts. Registration preflight does not
+  imply transactional execution after invocation begins.
 - Concurrent results preserve original call order.
 - A tool batch is not partially started when its full size exceeds remaining
   Agent budget.

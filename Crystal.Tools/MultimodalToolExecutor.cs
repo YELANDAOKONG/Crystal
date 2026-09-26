@@ -47,6 +47,7 @@ public sealed class MultimodalToolExecutor : IMultimodalToolExecutor
         CancellationToken cancellationToken = default)
     {
         var snapshot = CollectionSnapshot.Create(calls, nameof(calls));
+        EnsureToolsRegistered(snapshot);
 
         return _options.Mode switch
         {
@@ -59,6 +60,17 @@ public sealed class MultimodalToolExecutor : IMultimodalToolExecutor
             _ => throw new InvalidOperationException(
                 "The configured multimodal tool execution mode is invalid.")
         };
+    }
+
+    private void EnsureToolsRegistered(IReadOnlyList<MultimodalToolCall> calls)
+    {
+        foreach (var call in calls)
+        {
+            if (_catalog.Find(call.Name) is null)
+            {
+                throw new MultimodalToolNotFoundException();
+            }
+        }
     }
 
     private async Task<IReadOnlyList<MultimodalToolResult>> ExecuteSerialAsync(
