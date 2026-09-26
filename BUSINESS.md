@@ -95,6 +95,8 @@ depending on tool execution, Agent runtime, or Harness composition.
 ### Reasoning
 
 - Provider-neutral request hints for mode, effort, visible output, and budget.
+  Effort presets are optional conveniences; callers can supply another effort
+  value, which external adapters must interpret or reject explicitly.
 - Readable reasoning text classified as summary or trace.
 - Opaque continuation state copied and replayed unchanged.
 - Ordered preservation across ordinary and tool-calling turns.

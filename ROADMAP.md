@@ -57,6 +57,9 @@ baseline. Design documents and code must change together.
 - 2026-09-27: Agent and Harness budgets can be independently finite or
   unlimited. Null maximums mean no configured bound; Unlimited presets expose
   the all-unlimited case for text and multimodal families.
+- 2026-09-27: Reasoning-effort presets are conveniences, not a closed set.
+  Caller-defined effort values pass through unchanged; external adapters own
+  support checks and rejection.
 
 ## Phase 0 — Product and architecture reset
 
@@ -240,8 +243,10 @@ unsupported-feature behavior, and stream/non-stream equivalence tests.
 
 Current progress: text and multimodal Agent tests compare streamed and complete
 responses for equivalent run outcomes, usage, and ordered output; multimodal
-coverage also checks exact media-value preservation. Broader protocol semantics
-remain under evaluation before adding public contracts.
+coverage also checks exact media-value preservation. Open caller-defined
+reasoning effort is documented and tested across protocol and runtime layers.
+Broader protocol semantics remain under evaluation before adding public
+contracts.
 
 Exit criteria: an external adapter can implement each added contract without
 referencing Agent internals, and an unsupported request fails explicitly.

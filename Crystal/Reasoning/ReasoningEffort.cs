@@ -1,7 +1,8 @@
 namespace Crystal.Reasoning;
 
 /// <summary>
-/// Describes the requested relative reasoning effort.
+/// Describes a caller-requested reasoning effort. The named values are
+/// conveniences; callers may supply other values for external adapters.
 /// </summary>
 public sealed record ReasoningEffort
 {
@@ -33,7 +34,9 @@ public sealed record ReasoningEffort
     /// <summary>
     /// Initializes a reasoning effort.
     /// </summary>
-    /// <param name="value">The semantic effort value.</param>
+    /// <param name="value">
+    /// The caller-defined effort value, preserved exactly for the adapter.
+    /// </param>
     public ReasoningEffort(string value)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(value, nameof(value));

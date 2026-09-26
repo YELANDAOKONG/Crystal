@@ -86,6 +86,9 @@
   indexes. Multimodal streams identify candidate, item, message-content,
   reasoning-part, and tool-call-content indexes as applicable.
 - Keep provider-originated values open rather than forcing lossy enums.
+- Keep caller-supplied reasoning effort open as well: presets are optional,
+  custom values pass through unchanged, and unsupported values fail at the
+  external adapter boundary without implicit coercion.
 - Use named policy types instead of ambiguous public booleans.
 - Avoid ref and out except standard Try patterns.
 - Do not expose provider responses, SDK types, transport types, or provider

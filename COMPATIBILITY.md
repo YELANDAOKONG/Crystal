@@ -17,8 +17,9 @@ preserve complete Chat traffic without referencing Crystal.Tools,
 Crystal.Agents, or Crystal.Harness.
 
 The text and reasoning evidence was reviewed against official provider
-documentation on 2026-08-23. Multimodal and generation evidence was reviewed on
-2026-08-30, with multimodal Chat streaming reviewed on 2026-09-22.
+documentation on 2026-08-23, with model-dependent effort controls checked on
+2026-09-27. Multimodal and generation evidence was reviewed on 2026-08-30,
+with multimodal Chat streaming reviewed on 2026-09-22.
 
 ## Common capability rule
 
@@ -26,6 +27,20 @@ An adapter implements only the interfaces it can honor. Streaming is optional
 and separate from non-streaming. A service may implement Chat without
 Completion or Embeddings. An adapter must reject unsupported input, options, or
 output shapes instead of silently dropping, rewriting, or emulating them.
+
+Reasoning-effort support varies by configured model. Crystal's named effort
+values are examples, not a closed list or a promise that any model accepts them.
+An adapter receives the exact caller-supplied ReasoningEffort.Value, including
+values outside the presets. It must map a value it supports or reject the
+request; it must not silently clamp or substitute another effort. Mode and
+token-budget hints are separate controls and cannot be used as an implicit
+fallback for an unsupported effort.
+
+The [OpenAI reasoning guide](https://developers.openai.com/api/docs/guides/reasoning),
+[Gemini thinking guide](https://ai.google.dev/gemini-api/docs/thinking), and
+[Claude effort guide](https://platform.claude.com/docs/en/build-with-claude/effort)
+document differing levels, defaults, and controls. These are evidence for an
+open effort contract, not values to embed as provider-specific Crystal presets.
 
 Provider and model selection belongs to configured adapter instances. Core
 requests contain no provider model identifier. Capability profiles describe

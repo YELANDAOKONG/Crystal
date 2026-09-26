@@ -106,6 +106,12 @@ Provider-originated values remain open so adapters do not lose information.
 Owns request hints, readable reasoning text, readable-text classification, and
 opaque continuation state.
 
+ReasoningEffort is an open caller-authored value. Its named presets do not form
+an exhaustive model-independent scale. Crystal preserves a custom value exactly
+through requests, Agents, and Harnesses; external adapters map a supported value
+or reject it. Crystal does not normalize one effort to a preset or infer a
+provider parameter from its spelling.
+
 One provider-native reasoning block maps to one ReasoningContent value. A block
 contains zero or more readable text segments and optional opaque state. At least
 one surface is required. Streaming deltas identify each readable segment with a

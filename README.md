@@ -37,6 +37,11 @@ dotnet test Crystal.Tests/Crystal.Tests.csproj
 Crystal does not store or restore application sessions. Callers retain the
 conversation and other state they need, then supply it in a later request.
 
+Reasoning effort presets such as `ReasoningEffort.Low` are optional. Callers can
+pass `new ReasoningEffort("very-high")` through `ReasoningOptions` when their
+external adapter supports that value. Crystal forwards the value unchanged;
+the adapter rejects unsupported values rather than substituting a preset.
+
 ### Operation pipelines
 
 `Crystal.Pipelines` composes caller-owned middleware around any typed

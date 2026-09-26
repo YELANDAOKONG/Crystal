@@ -9,7 +9,9 @@ public sealed record ReasoningOptions
     /// Initializes reasoning options.
     /// </summary>
     /// <param name="mode">The requested reasoning mode.</param>
-    /// <param name="effort">The requested relative effort.</param>
+    /// <param name="effort">
+    /// The requested effort, including a caller-defined value.
+    /// </param>
     /// <param name="output">The requested readable output surface.</param>
     /// <param name="tokenBudget">An optional positive reasoning-token budget.</param>
     public ReasoningOptions(
