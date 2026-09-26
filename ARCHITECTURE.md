@@ -229,11 +229,22 @@ and multimodal infrastructure is compiled into Crystal.Tools.
 The standard text and multimodal executors check every call name against the
 immutable catalog before starting any call in a batch, whether dispatch is
 serial or concurrent. They preserve input result order even when calls run
-concurrently. Unknown tools, rejected calls without caller-authored output,
-and unhandled tool exceptions terminate execution. A later approval rejection
-or tool failure may occur after earlier calls have started; the preflight
+concurrently. Concurrent dispatch creates at most the configured number of
+workers and stores each result at its original call index, so a large batch
+does not create a waiting task for every call. Unknown tools, rejected calls
+without caller-authored output, and unhandled tool exceptions terminate
+execution. A later approval rejection or tool failure may occur after earlier
+calls have started; the preflight
 guarantee concerns registration only. Neither runtime writes an error message
 or media block for the model.
+
+After registration preflight, both executors check cancellation before each
+call and after caller policy returns. These checks prevent a pending tool from
+starting when cancellation has been observed, including when a caller policy
+ignored its token. A post-tool check prevents returning success after observed
+cancellation. Concurrent calls may already have passed their own check;
+started side effects remain and are not rolled back. A canceled tool failure
+bypasses optional exception-to-output mapping.
 
 ### Crystal.Agents
 

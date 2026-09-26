@@ -169,9 +169,15 @@ Tests must prove:
   text or multimodal tool invocation starts. Registration preflight does not
   imply transactional execution after invocation begins.
 - Concurrent results preserve original call order.
+- Concurrent tool dispatch bounds worker tasks by the configured concurrency;
+  queued calls do not each allocate a waiting task.
 - A tool batch is not partially started when its full size exceeds remaining
   Agent budget.
 - Approval policies run before tool invocation.
+- Text and multimodal tool executors check cancellation before dispatch and
+  after awaited policy or tool work. A pending call that observes cancellation
+  does not start its tool, and a canceled failure skips exception-to-output
+  mapping. Already-started concurrent calls may have side effects.
 - Rejection without caller-authored output terminates execution.
 - Unhandled tool exceptions terminate execution.
 - Model and tool attempts consume limits even when they fail or time out.

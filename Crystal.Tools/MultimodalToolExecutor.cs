@@ -48,6 +48,7 @@ public sealed class MultimodalToolExecutor : IMultimodalToolExecutor
     {
         var snapshot = CollectionSnapshot.Create(calls, nameof(calls));
         EnsureToolsRegistered(snapshot);
+        cancellationToken.ThrowIfCancellationRequested();
 
         return _options.Mode switch
         {
@@ -95,38 +96,40 @@ public sealed class MultimodalToolExecutor : IMultimodalToolExecutor
             IReadOnlyList<MultimodalToolCall> calls,
             CancellationToken cancellationToken)
     {
-        using var concurrencyGate = new SemaphoreSlim(
-            _options.MaximumConcurrency,
-            _options.MaximumConcurrency);
-        var tasks = new Task<MultimodalToolResult>[calls.Count];
+        var results = new MultimodalToolResult[calls.Count];
+        var nextIndex = 0;
+        var indexSync = new object();
+        var workers = new Task[Math.Min(calls.Count, _options.MaximumConcurrency)];
 
-        for (var index = 0; index < calls.Count; index++)
+        for (var index = 0; index < workers.Length; index++)
         {
-            tasks[index] = ExecuteWithGateAsync(
-                calls[index],
-                concurrencyGate,
-                cancellationToken);
+            workers[index] = RunWorkerAsync();
         }
 
-        var results = await Task.WhenAll(tasks).ConfigureAwait(false);
+        await Task.WhenAll(workers).ConfigureAwait(false);
         return Array.AsReadOnly(results);
-    }
 
-    private async Task<MultimodalToolResult> ExecuteWithGateAsync(
-        MultimodalToolCall call,
-        SemaphoreSlim concurrencyGate,
-        CancellationToken cancellationToken)
-    {
-        await concurrencyGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        async Task RunWorkerAsync()
+        {
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                int callIndex;
+                lock (indexSync)
+                {
+                    if (nextIndex == calls.Count)
+                    {
+                        return;
+                    }
 
-        try
-        {
-            return await ExecuteCallAsync(call, cancellationToken)
-                .ConfigureAwait(false);
-        }
-        finally
-        {
-            concurrencyGate.Release();
+                    callIndex = nextIndex++;
+                }
+
+                results[callIndex] = await ExecuteCallAsync(
+                        calls[callIndex],
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
         }
     }
 
@@ -134,6 +137,7 @@ public sealed class MultimodalToolExecutor : IMultimodalToolExecutor
         MultimodalToolCall call,
         CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var tool = _catalog.Find(call.Name)
             ?? throw new MultimodalToolNotFoundException();
 
@@ -141,6 +145,7 @@ public sealed class MultimodalToolExecutor : IMultimodalToolExecutor
                 call,
                 cancellationToken)
             .ConfigureAwait(false);
+        cancellationToken.ThrowIfCancellationRequested();
 
         switch (decision.Action)
         {
@@ -150,6 +155,7 @@ public sealed class MultimodalToolExecutor : IMultimodalToolExecutor
                         call,
                         cancellationToken)
                     .ConfigureAwait(false);
+                cancellationToken.ThrowIfCancellationRequested();
                 return CreateResult(call, output);
             case MultimodalToolInvocationAction.Reject:
                 var rejectionOutput = decision.RejectionOutput
@@ -179,6 +185,7 @@ public sealed class MultimodalToolExecutor : IMultimodalToolExecutor
         }
         catch (Exception exception)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (_exceptionMapper is null)
             {
                 throw new MultimodalToolInvocationException(exception);

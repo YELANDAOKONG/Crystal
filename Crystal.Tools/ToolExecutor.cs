@@ -48,6 +48,7 @@ public sealed class ToolExecutor : IToolExecutor
     {
         var snapshot = CollectionSnapshot.Create(calls, nameof(calls));
         EnsureToolsRegistered(snapshot);
+        cancellationToken.ThrowIfCancellationRequested();
 
         return _options.Mode switch
         {
@@ -94,38 +95,40 @@ public sealed class ToolExecutor : IToolExecutor
         IReadOnlyList<ToolCall> calls,
         CancellationToken cancellationToken)
     {
-        using var concurrencyGate = new SemaphoreSlim(
-            _options.MaximumConcurrency,
-            _options.MaximumConcurrency);
-        var tasks = new Task<ToolResult>[calls.Count];
+        var results = new ToolResult[calls.Count];
+        var nextIndex = 0;
+        var indexSync = new object();
+        var workers = new Task[Math.Min(calls.Count, _options.MaximumConcurrency)];
 
-        for (var index = 0; index < calls.Count; index++)
+        for (var index = 0; index < workers.Length; index++)
         {
-            tasks[index] = ExecuteWithGateAsync(
-                calls[index],
-                concurrencyGate,
-                cancellationToken);
+            workers[index] = RunWorkerAsync();
         }
 
-        var results = await Task.WhenAll(tasks).ConfigureAwait(false);
+        await Task.WhenAll(workers).ConfigureAwait(false);
         return Array.AsReadOnly(results);
-    }
 
-    private async Task<ToolResult> ExecuteWithGateAsync(
-        ToolCall call,
-        SemaphoreSlim concurrencyGate,
-        CancellationToken cancellationToken)
-    {
-        await concurrencyGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        async Task RunWorkerAsync()
+        {
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                int callIndex;
+                lock (indexSync)
+                {
+                    if (nextIndex == calls.Count)
+                    {
+                        return;
+                    }
 
-        try
-        {
-            return await ExecuteCallAsync(call, cancellationToken)
-                .ConfigureAwait(false);
-        }
-        finally
-        {
-            concurrencyGate.Release();
+                    callIndex = nextIndex++;
+                }
+
+                results[callIndex] = await ExecuteCallAsync(
+                        calls[callIndex],
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
         }
     }
 
@@ -133,6 +136,7 @@ public sealed class ToolExecutor : IToolExecutor
         ToolCall call,
         CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var tool = _catalog.Find(call.Name)
             ?? throw new ToolNotFoundException();
 
@@ -140,6 +144,7 @@ public sealed class ToolExecutor : IToolExecutor
                 call,
                 cancellationToken)
             .ConfigureAwait(false);
+        cancellationToken.ThrowIfCancellationRequested();
 
         switch (decision.Action)
         {
@@ -149,6 +154,7 @@ public sealed class ToolExecutor : IToolExecutor
                         call,
                         cancellationToken)
                     .ConfigureAwait(false);
+                cancellationToken.ThrowIfCancellationRequested();
                 return CreateResult(call, output);
             case ToolInvocationAction.Reject:
                 var rejectionOutput = decision.RejectionOutput
@@ -178,6 +184,7 @@ public sealed class ToolExecutor : IToolExecutor
         }
         catch (Exception exception)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (_exceptionMapper is null)
             {
                 throw new ToolInvocationException(exception);

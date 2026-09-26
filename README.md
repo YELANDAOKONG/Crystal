@@ -357,6 +357,8 @@ public static class AgentExample
 ITool receives exact raw model arguments in ToolCall.Arguments and returns exact
 caller-owned text in ToolOutput. The Agent never repairs either value. Run usage
 is available only when every attempted model call reports usage.
+Tool executors check cancellation at dispatch boundaries, including after a
+caller policy returns; a started tool's side effects remain caller-owned.
 
 AgentRunLimits accepts a finite maximum or `null` for each model-call,
 tool-call, and duration budget. `AgentRunLimits.Unlimited` removes all three

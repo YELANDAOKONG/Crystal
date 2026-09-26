@@ -60,6 +60,12 @@ baseline. Design documents and code must change together.
 - 2026-09-27: Reasoning-effort presets are conveniences, not a closed set.
   Caller-defined effort values pass through unchanged; external adapters own
   support checks and rejection.
+- 2026-09-27: Text and multimodal tool dispatch checks cancellation at policy
+  and invocation boundaries, including when caller implementations ignore the
+  token. Pending calls that observe cancellation do not start, and canceled
+  failures skip exception mapping.
+- 2026-09-27: Concurrent text and multimodal tool dispatch uses at most the
+  configured number of workers, with results stored in original call order.
 
 ## Phase 0 — Product and architecture reset
 
@@ -98,7 +104,8 @@ Deliverables:
 - executable caller-owned tools;
 - immutable case-sensitive catalog;
 - registration preflight for complete text and multimodal batches;
-- explicit serial and bounded-concurrent execution;
+- cooperative cancellation checks at tool-dispatch boundaries;
+- explicit serial and bounded-worker concurrent execution;
 - ordered correlation of results;
 - optional caller-owned approval; and
 - optional caller-owned exception-to-output mapping.
@@ -165,8 +172,9 @@ Deliverables:
 Current progress: the xUnit suite covers generic pipelines, client wrappers,
 text and multimodal Agent streaming, media-source ownership, text Harness
 ancestry and shared-budget behavior, and text/multimodal tool registration
-preflight. The compatibility baseline, package metadata, CI, and broader
-contract coverage remain open.
+preflight and cancellation. Concurrent tool scheduling tests cover worker
+bounds and result order in both tool families. The compatibility baseline,
+package metadata, CI, and broader contract coverage remain open.
 
 Until the suite covers existing contracts, the solution build remains the
 repository-wide verification gate.
