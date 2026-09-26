@@ -54,6 +54,9 @@ baseline. Design documents and code must change together.
 - 2026-09-27: Crystal.Decorators is the opt-in client wrapper assembly. Caller
   policies use ordinary generic middleware delegates; no parallel policy
   abstraction is required.
+- 2026-09-27: Agent and Harness budgets can be independently finite or
+  unlimited. Null maximums mean no configured bound; Unlimited presets expose
+  the all-unlimited case for text and multimodal families.
 
 ## Phase 0 — Product and architecture reset
 
@@ -64,7 +67,7 @@ Deliverables:
 - one vocabulary for Completion, Chat, Tool, Agent, and Harness;
 - explicit current exclusions and future modality direction;
 - provider-adapter reasoning requirements; and
-- executable design rules for prompt neutrality and bounded execution.
+- executable design rules for prompt neutrality and explicit execution limits.
 
 ## Phase 1 — Text-model protocol
 
@@ -123,7 +126,7 @@ Status: complete.
 Deliverables:
 
 - named Agent registry;
-- bounded Harness sessions;
+- Harness sessions with independent optional shared limits;
 - explicit parent-child invocation;
 - shared budget reservation and cancellation;
 - ancestry and event forwarding; and
@@ -226,7 +229,7 @@ operations without a provider dependency or Crystal-authored model text.
 
 ## Phase 8 — Portable model and tool semantics
 
-Status: in progress; text Agent stream consumption is implemented.
+Status: in progress; text and multimodal Agent stream consumption is implemented.
 
 Evaluate structured output, richer embedding inputs, and tool schema binding
 against multiple distinct provider shapes. Text Agent stream consumption
@@ -234,6 +237,11 @@ forwards exact events and assembles the complete response before selection.
 Add only semantics that can be specified without a provider identifier,
 wire DTO, or generic option bag. Each addition needs lossless ordering rules,
 unsupported-feature behavior, and stream/non-stream equivalence tests.
+
+Current progress: text and multimodal Agent tests compare streamed and complete
+responses for equivalent run outcomes, usage, and ordered output; multimodal
+coverage also checks exact media-value preservation. Broader protocol semantics
+remain under evaluation before adding public contracts.
 
 Exit criteria: an external adapter can implement each added contract without
 referencing Agent internals, and an unsupported request fails explicitly.

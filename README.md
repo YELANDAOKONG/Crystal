@@ -1,8 +1,9 @@
 # Crystal
 
 Crystal is a provider-neutral C# library for text and multimodal model access,
-image, audio, and video generation, tool execution, bounded Agents, and explicit
-Agent Harness composition, and generic asynchronous operation pipelines.
+image, audio, and video generation, tool execution, Agents with optional limits,
+explicit Agent Harness composition, and generic asynchronous operation
+pipelines.
 
 Text and multimodal Chat, Tool, Agent, and Harness APIs are independent. Existing
 text interfaces remain unchanged and text-only.
@@ -352,6 +353,10 @@ ITool receives exact raw model arguments in ToolCall.Arguments and returns exact
 caller-owned text in ToolOutput. The Agent never repairs either value. Run usage
 is available only when every attempted model call reports usage.
 
+AgentRunLimits accepts a finite maximum or `null` for each model-call,
+tool-call, and duration budget. `AgentRunLimits.Unlimited` removes all three
+configured bounds while caller cancellation still applies.
+
 Multimodal tools and Agents use the independent IMultimodalTool,
 IMultimodalToolExecutor, IMultimodalAgent, and MultimodalAgent contracts. They do
 not inherit from or widen the text Tool and Agent families. IMultimodalAgent
@@ -359,9 +364,9 @@ exposes its fixed model input and output capabilities directly.
 
 ### Harness
 
-Register Agents under case-sensitive names, create a bounded session, and invoke
-each Agent explicitly. Parent invocation identifiers express ancestry; Harness
-does not choose routes:
+Register Agents under case-sensitive names, create a session with chosen
+budgets, and invoke each Agent explicitly. Parent invocation identifiers
+express ancestry; Harness does not choose routes:
 
 ~~~csharp
 using System;
@@ -415,6 +420,10 @@ public static class HarnessExample
 
 To invoke a child, pass the completed or registered parent invocation identifier
 through AgentInvocationRequest.ParentInvocationId.
+
+HarnessLimits likewise accepts `null` independently for depth, model calls,
+tool calls, and duration. `HarnessLimits.Unlimited` removes all four shared
+bounds; a finite shared maximum still narrows an unlimited Agent request.
 
 Text streaming adapters use candidate and item indexes to preserve interleaving.
 Reasoning text deltas also use TextSegmentIndex so multiple readable segments can

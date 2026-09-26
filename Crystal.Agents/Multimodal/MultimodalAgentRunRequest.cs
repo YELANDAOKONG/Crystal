@@ -10,7 +10,7 @@ public sealed record MultimodalAgentRunRequest
     /// <summary>Initializes a multimodal Agent run request.</summary>
     /// <param name="runId">The caller-supplied non-empty run identifier.</param>
     /// <param name="items">The exact ordered initial transcript.</param>
-    /// <param name="limits">The finite run limits.</param>
+    /// <param name="limits">The caller-configured optional run limits.</param>
     /// <param name="reasoning">Optional portable reasoning hints.</param>
     public MultimodalAgentRunRequest(
         Guid runId,
@@ -42,7 +42,7 @@ public sealed record MultimodalAgentRunRequest
     /// </summary>
     public IReadOnlyList<MultimodalChatItem> Items { get; }
 
-    /// <summary>Gets the finite run limits.</summary>
+    /// <summary>Gets the caller-configured optional run limits.</summary>
     public MultimodalAgentRunLimits Limits { get; }
 
     /// <summary>Gets optional portable reasoning hints.</summary>

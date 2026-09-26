@@ -172,6 +172,10 @@ Tests must prove:
 - Rejection without caller-authored output terminates execution.
 - Unhandled tool exceptions terminate execution.
 - Model and tool attempts consume limits even when they fail or time out.
+- Agent and Harness maximums are independently nullable: null means no
+  configured limit, while finite values retain their current validation and
+  accounting. An unlimited duration creates no timer, but cancellation still
+  propagates.
 - Agent usage is null unless every attempted model call reports usage.
 - Context overflow is surfaced; Crystal does not truncate or summarize.
 - A text Agent prefers IStreamingChatClient when available, forwards exact
@@ -186,7 +190,8 @@ Tests must prove:
 
 ## Harness execution
 
-- Sessions have finite shared depth, model-call, tool-call, and duration limits.
+- Sessions may have finite or unlimited shared depth, model-call, tool-call, and
+  duration limits. Finite shared limits narrow unlimited invocation requests.
 - Concurrent invocations reserve shared call capacity before they start.
 - Successful invocations return unused reservation.
 - Failed or abandoned invocations conservatively retain their reservation.

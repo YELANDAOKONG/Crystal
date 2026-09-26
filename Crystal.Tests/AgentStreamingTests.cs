@@ -137,6 +137,45 @@ public sealed class AgentStreamingTests
     }
 
     [Fact]
+    public async Task UnlimitedLimitsAllowMultipleModelAndToolAttempts()
+    {
+        var client = new ToolCallingStreamingClient();
+        var executor = new RecordingToolExecutor();
+        var agent = new Agent(client, (_, _) => ValueTask.FromResult(0), executor);
+        var request = new AgentRunRequest(
+            Guid.NewGuid(),
+            [new ChatMessage(ChatRole.User, "question")],
+            AgentRunLimits.Unlimited);
+
+        var result = await agent.RunAsync(request);
+
+        Assert.Equal(AgentRunStopReason.Completed, result.StopReason);
+        Assert.Equal(2, result.ModelCallCount);
+        Assert.Equal(1, result.ToolCallCount);
+        Assert.Equal(2, client.Requests.Count);
+    }
+
+    [Fact]
+    public async Task UnlimitedModelCallsStillHonorFiniteToolCallLimit()
+    {
+        var client = new ToolCallingStreamingClient();
+        var executor = new RecordingToolExecutor();
+        var agent = new Agent(client, (_, _) => ValueTask.FromResult(0), executor);
+        var request = new AgentRunRequest(
+            Guid.NewGuid(),
+            [new ChatMessage(ChatRole.User, "question")],
+            new AgentRunLimits(null, 0, null));
+
+        var result = await agent.RunAsync(request);
+
+        Assert.Equal(AgentRunStopReason.ToolCallLimitReached, result.StopReason);
+        Assert.Equal(1, result.ModelCallCount);
+        Assert.Equal(0, result.ToolCallCount);
+        Assert.Single(client.Requests);
+        Assert.Null(executor.Call);
+    }
+
+    [Fact]
     public async Task CallerCancellationStopsStreamingWithoutACompletedResult()
     {
         ChatStreamEvent[] providerEvents =
@@ -149,7 +188,7 @@ public sealed class AgentStreamingTests
         var request = new AgentRunRequest(
             Guid.NewGuid(),
             [new ChatMessage(ChatRole.User, "question")],
-            new AgentRunLimits(1, 0, TimeSpan.FromMinutes(1)));
+            AgentRunLimits.Unlimited);
         using var cancellation = new CancellationTokenSource();
         var events = new List<AgentRunEvent>();
 

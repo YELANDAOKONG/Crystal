@@ -231,7 +231,7 @@ or media block for the model.
 
 ### Crystal.Agents
 
-Owns IAgent, Agent, run inputs, finite limits, results, stop reasons, candidate
+Owns IAgent, Agent, run inputs, optional limits, results, stop reasons, candidate
 selection, and typed run events.
 
 Agent executes this loop:
@@ -251,6 +251,10 @@ Agent executes this loop:
 Model and tool calls are counted when attempted. Tool batches are all-or-none
 with respect to the configured tool-call budget: Agent never starts a partial
 batch merely because some budget remains.
+Each Agent limit is independent. A null maximum means no configured bound for
+that dimension, and Unlimited sets all three maximums to null. A finite
+duration creates a cancellation timer; an unlimited duration relies on caller
+cancellation. Attempts remain counted even when their limit is unlimited.
 
 Agent returns aggregated usage only when every attempted model call reports
 usage. If a model call times out or any completed response omits usage, the run
@@ -291,9 +295,16 @@ Agents and supplies parent invocation identifiers. The session:
 - gives each Agent an effective limit no larger than its request or the shared
   remainder;
 - returns unused reserved capacity after a successful run;
-- uses one shared wall-clock duration boundary;
+- uses one shared wall-clock duration boundary when configured;
 - propagates session and invocation cancellation; and
 - wraps Agent events with session, Agent, invocation, and parent identifiers.
+
+Each Harness maximum may be null, meaning no configured shared bound. Unlimited
+sets depth, model calls, tool calls, and duration to null. A finite session
+maximum narrows an unlimited per-Agent request; an unlimited shared maximum
+retains a finite per-Agent request. Only finite shared call capacity is reserved
+and returned. Caller and session cancellation continue to propagate when
+duration is unlimited.
 
 No model output automatically routes to another Agent. Callers build routers,
 graphs, supervisors, handoffs, or peer topologies around the explicit invocation

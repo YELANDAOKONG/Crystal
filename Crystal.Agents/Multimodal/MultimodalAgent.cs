@@ -7,7 +7,7 @@ using Crystal.Multimodal.Tools;
 namespace Crystal.Multimodal.Agents;
 
 /// <summary>
-/// Runs an explicit, bounded, prompt-free multimodal model and tool loop.
+/// Runs an explicit, prompt-free multimodal model and tool loop with optional limits.
 /// Crystal replays media values exactly and does not fetch, transcode, or cache
 /// them.
 /// </summary>
@@ -77,8 +77,9 @@ public sealed class MultimodalAgent : IMultimodalAgent
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
 
-        using var durationSource =
-            new CancellationTokenSource(request.Limits.MaximumDuration);
+        using var durationSource = request.Limits.MaximumDuration is TimeSpan duration
+            ? new CancellationTokenSource(duration)
+            : new CancellationTokenSource();
         using var operationSource =
             CancellationTokenSource.CreateLinkedTokenSource(
                 cancellationToken,
@@ -107,7 +108,8 @@ public sealed class MultimodalAgent : IMultimodalAgent
                 yield break;
             }
 
-            if (modelCallCount >= request.Limits.MaximumModelCalls)
+            if (request.Limits.MaximumModelCalls is int maximumModelCalls
+                && modelCallCount >= maximumModelCalls)
             {
                 yield return new MultimodalAgentRunCompletedEvent(
                     request.RunId,
@@ -303,10 +305,8 @@ public sealed class MultimodalAgent : IMultimodalAgent
                 yield break;
             }
 
-            var remainingToolCalls =
-                request.Limits.MaximumToolCalls - toolCallCount;
-
-            if (toolCalls.Length > remainingToolCalls)
+            if (request.Limits.MaximumToolCalls is int maximumToolCalls
+                && toolCalls.Length > maximumToolCalls - toolCallCount)
             {
                 yield return new MultimodalAgentRunCompletedEvent(
                     request.RunId,

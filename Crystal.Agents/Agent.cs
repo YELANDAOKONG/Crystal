@@ -7,7 +7,7 @@ using Crystal.Tools;
 namespace Crystal.Agents;
 
 /// <summary>
-/// Runs an explicit, bounded, prompt-free text model and tool loop.
+/// Runs an explicit, prompt-free text model and tool loop with optional limits.
 /// </summary>
 public sealed class Agent : IAgent
 {
@@ -72,8 +72,9 @@ public sealed class Agent : IAgent
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
 
-        using var durationSource =
-            new CancellationTokenSource(request.Limits.MaximumDuration);
+        using var durationSource = request.Limits.MaximumDuration is TimeSpan duration
+            ? new CancellationTokenSource(duration)
+            : new CancellationTokenSource();
         using var operationSource =
             CancellationTokenSource.CreateLinkedTokenSource(
                 cancellationToken,
@@ -104,7 +105,8 @@ public sealed class Agent : IAgent
                 yield break;
             }
 
-            if (modelCallCount >= request.Limits.MaximumModelCalls)
+            if (request.Limits.MaximumModelCalls is int maximumModelCalls
+                && modelCallCount >= maximumModelCalls)
             {
                 var modelLimitResult = CreateResult(
                     request,
@@ -306,10 +308,8 @@ public sealed class Agent : IAgent
                 yield break;
             }
 
-            var remainingToolCalls =
-                request.Limits.MaximumToolCalls - toolCallCount;
-
-            if (toolCalls.Length > remainingToolCalls)
+            if (request.Limits.MaximumToolCalls is int maximumToolCalls
+                && toolCalls.Length > maximumToolCalls - toolCallCount)
             {
                 var toolLimitResult = CreateResult(
                     request,

@@ -88,6 +88,82 @@ public sealed class HarnessSessionTests
         Assert.Equal(2, client.Requests.Count);
     }
 
+    [Fact]
+    public async Task UnlimitedSessionAllowsNestedInvocationsWithoutBudgetStops()
+    {
+        var response = new ChatResponse(
+            [new ChatCandidate([], FinishReason.Stop)]);
+        var client = new RecordingChatClient(response);
+        var name = new AgentName("worker");
+        var agent = new Agent(client, (_, _) => ValueTask.FromResult(0));
+        var harness = new AgentHarness([new AgentRegistration(name, agent)]);
+        var session = harness.CreateSession(Guid.NewGuid(), HarnessLimits.Unlimited);
+        Guid? parentId = null;
+
+        for (var index = 0; index < 3; index++)
+        {
+            var invocationId = Guid.NewGuid();
+            var request = new AgentInvocationRequest(
+                invocationId,
+                name,
+                [],
+                AgentRunLimits.Unlimited,
+                parentId);
+            var events = new List<HarnessEvent>();
+            await foreach (var harnessEvent in session.StreamAsync(request))
+            {
+                events.Add(harnessEvent);
+            }
+
+            var started = Assert.Single(events.OfType<HarnessInvocationStartedEvent>());
+            Assert.Null(started.EffectiveLimits.MaximumModelCalls);
+            Assert.Null(started.EffectiveLimits.MaximumToolCalls);
+            Assert.Null(started.EffectiveLimits.MaximumDuration);
+            Assert.Equal(
+                AgentInvocationOutcome.Completed,
+                Assert.Single(events.OfType<HarnessInvocationCompletedEvent>())
+                    .Result.Outcome);
+            parentId = invocationId;
+        }
+
+        Assert.Equal(3, client.Requests.Count);
+    }
+
+    [Fact]
+    public async Task FiniteSharedBudgetNarrowsAnUnlimitedInvocationRequest()
+    {
+        var response = new ChatResponse(
+            [new ChatCandidate([], FinishReason.Stop)]);
+        var client = new RecordingChatClient(response);
+        var name = new AgentName("worker");
+        var agent = new Agent(client, (_, _) => ValueTask.FromResult(0));
+        var harness = new AgentHarness([new AgentRegistration(name, agent)]);
+        var session = harness.CreateSession(
+            Guid.NewGuid(),
+            new HarnessLimits(0, 2, 0, TimeSpan.FromMinutes(1)));
+
+        for (var expectedReservation = 2; expectedReservation >= 1; expectedReservation--)
+        {
+            var request = new AgentInvocationRequest(
+                Guid.NewGuid(), name, [], AgentRunLimits.Unlimited);
+            var events = new List<HarnessEvent>();
+            await foreach (var harnessEvent in session.StreamAsync(request))
+            {
+                events.Add(harnessEvent);
+            }
+
+            var started = Assert.Single(events.OfType<HarnessInvocationStartedEvent>());
+            Assert.Equal(expectedReservation, started.EffectiveLimits.MaximumModelCalls);
+            Assert.Equal(0, started.EffectiveLimits.MaximumToolCalls);
+            Assert.NotNull(started.EffectiveLimits.MaximumDuration);
+        }
+
+        var denied = await session.InvokeAsync(new AgentInvocationRequest(
+            Guid.NewGuid(), name, [], AgentRunLimits.Unlimited));
+        Assert.Equal(AgentInvocationOutcome.ModelCallLimitReached, denied.Outcome);
+        Assert.Equal(2, client.Requests.Count);
+    }
+
     private sealed class RecordingChatClient(ChatResponse response) : IChatClient
     {
         public List<ChatRequest> Requests { get; } = [];

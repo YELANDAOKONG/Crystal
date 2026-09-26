@@ -2,7 +2,7 @@ using Crystal.Multimodal.Chat;
 
 namespace Crystal.Multimodal.Agents;
 
-/// <summary>Defines one bounded, prompt-free multimodal Agent.</summary>
+/// <summary>Defines one prompt-free multimodal Agent with optional limits.</summary>
 public interface IMultimodalAgent
 {
     /// <summary>Gets the Agent model input and output capabilities.</summary>

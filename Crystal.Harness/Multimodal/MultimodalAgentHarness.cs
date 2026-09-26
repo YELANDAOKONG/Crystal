@@ -52,9 +52,9 @@ public sealed class MultimodalAgentHarness
     /// <summary>Gets registered Agent names in registration order.</summary>
     public IReadOnlyList<MultimodalAgentName> AgentNames { get; }
 
-    /// <summary>Creates an independent bounded multimodal Harness session.</summary>
+    /// <summary>Creates an independent multimodal Harness session with optional shared limits.</summary>
     /// <param name="sessionId">The caller-supplied session identifier.</param>
-    /// <param name="limits">The finite shared session limits.</param>
+    /// <param name="limits">The caller-configured optional shared limits.</param>
     /// <param name="sessionCancellationToken">
     /// A token shared by every invocation in the session.
     /// </param>

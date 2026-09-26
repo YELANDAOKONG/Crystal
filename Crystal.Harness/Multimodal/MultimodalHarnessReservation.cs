@@ -8,8 +8,8 @@ internal sealed class MultimodalHarnessReservation
         IMultimodalAgent? agent,
         MultimodalAgentRunLimits? effectiveLimits,
         MultimodalAgentInvocationOutcome? deniedOutcome,
-        int reservedModelCalls,
-        int reservedToolCalls)
+        int? reservedModelCalls,
+        int? reservedToolCalls)
     {
         Agent = agent;
         EffectiveLimits = effectiveLimits;
@@ -24,9 +24,9 @@ internal sealed class MultimodalHarnessReservation
 
     public MultimodalAgentInvocationOutcome? DeniedOutcome { get; }
 
-    public int ReservedModelCalls { get; }
+    public int? ReservedModelCalls { get; }
 
-    public int ReservedToolCalls { get; }
+    public int? ReservedToolCalls { get; }
 
     public bool IsGranted => Agent is not null;
 

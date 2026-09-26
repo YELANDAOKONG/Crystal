@@ -15,8 +15,8 @@ public sealed class AgentHarnessSession : IAgentHarnessSession
     private readonly long _startedTimestamp;
     private readonly object _sync = new();
     private readonly TimeProvider _timeProvider;
-    private int _remainingModelCalls;
-    private int _remainingToolCalls;
+    private int? _remainingModelCalls;
+    private int? _remainingToolCalls;
 
     internal AgentHarnessSession(
         Guid sessionId,
@@ -196,7 +196,7 @@ public sealed class AgentHarnessSession : IAgentHarnessSession
             var depth = GetInvocationDepth(request);
             _invocationDepths.Add(request.InvocationId, depth);
 
-            if (depth > Limits.MaximumDepth)
+            if (Limits.MaximumDepth is int maximumDepth && depth > maximumDepth)
             {
                 return HarnessReservation.Denied(
                     AgentInvocationOutcome.DepthLimitReached);
@@ -204,7 +204,8 @@ public sealed class AgentHarnessSession : IAgentHarnessSession
 
             var remainingDuration = GetRemainingDuration();
 
-            if (remainingDuration <= TimeSpan.Zero)
+            if (remainingDuration is TimeSpan availableDuration
+                && availableDuration <= TimeSpan.Zero)
             {
                 return HarnessReservation.Denied(
                     AgentInvocationOutcome.DurationLimitReached);
@@ -216,22 +217,33 @@ public sealed class AgentHarnessSession : IAgentHarnessSession
                     AgentInvocationOutcome.ModelCallLimitReached);
             }
 
-            var modelCalls = Math.Min(
+            var modelCalls = MinLimit(
                 request.Limits.MaximumModelCalls,
                 _remainingModelCalls);
-            var toolCalls = Math.Min(
+            var toolCalls = MinLimit(
                 request.Limits.MaximumToolCalls,
                 _remainingToolCalls);
-            var duration = request.Limits.MaximumDuration <= remainingDuration
-                ? request.Limits.MaximumDuration
-                : remainingDuration;
+            var duration = MinLimit(
+                request.Limits.MaximumDuration,
+                remainingDuration);
             var effectiveLimits = new AgentRunLimits(
                 modelCalls,
                 toolCalls,
                 duration);
 
-            _remainingModelCalls -= modelCalls;
-            _remainingToolCalls -= toolCalls;
+            if (_remainingModelCalls is int remainingModelCalls)
+            {
+                _remainingModelCalls = remainingModelCalls
+                    - (modelCalls ?? throw new InvalidOperationException(
+                        "The Harness reserved no model-call capacity."));
+            }
+
+            if (_remainingToolCalls is int remainingToolCalls)
+            {
+                _remainingToolCalls = remainingToolCalls
+                    - (toolCalls ?? throw new InvalidOperationException(
+                        "The Harness reserved no tool-call capacity."));
+            }
 
             return HarnessReservation.Granted(agent, effectiveLimits);
         }
@@ -256,18 +268,46 @@ public sealed class AgentHarnessSession : IAgentHarnessSession
         return checked(parentDepth + 1);
     }
 
-    private TimeSpan GetRemainingDuration()
+    private TimeSpan? GetRemainingDuration()
     {
+        if (Limits.MaximumDuration is not TimeSpan maximumDuration)
+        {
+            return null;
+        }
+
         var elapsed = _timeProvider.GetElapsedTime(_startedTimestamp);
-        return Limits.MaximumDuration - elapsed;
+        return maximumDuration - elapsed;
+    }
+
+    private static int? MinLimit(int? first, int? second)
+    {
+        if (first is null)
+        {
+            return second;
+        }
+
+        return second is null ? first : Math.Min(first.Value, second.Value);
+    }
+
+    private static TimeSpan? MinLimit(TimeSpan? first, TimeSpan? second)
+    {
+        if (first is null)
+        {
+            return second;
+        }
+
+        return second is null ? first : TimeSpan.FromTicks(
+            Math.Min(first.Value.Ticks, second.Value.Ticks));
     }
 
     private void ReleaseUnusedReservation(
         HarnessReservation reservation,
         AgentRunResult result)
     {
-        if (result.ModelCallCount > reservation.ReservedModelCalls
-            || result.ToolCallCount > reservation.ReservedToolCalls)
+        if ((reservation.ReservedModelCalls is int maximumReservedModelCalls
+                && result.ModelCallCount > maximumReservedModelCalls)
+            || (reservation.ReservedToolCalls is int maximumReservedToolCalls
+                && result.ToolCallCount > maximumReservedToolCalls))
         {
             throw new InvalidOperationException(
                 "An Agent exceeded the limits reserved by the Harness.");
@@ -275,14 +315,27 @@ public sealed class AgentHarnessSession : IAgentHarnessSession
 
         lock (_sync)
         {
-            _remainingModelCalls = checked(
-                _remainingModelCalls
-                + reservation.ReservedModelCalls
-                - result.ModelCallCount);
-            _remainingToolCalls = checked(
-                _remainingToolCalls
-                + reservation.ReservedToolCalls
-                - result.ToolCallCount);
+            if (_remainingModelCalls is int remainingModelCalls)
+            {
+                var reservedModelCalls = reservation.ReservedModelCalls
+                    ?? throw new InvalidOperationException(
+                        "The Harness has no model-call reservation to release.");
+                _remainingModelCalls = checked(
+                    remainingModelCalls
+                    + reservedModelCalls
+                    - result.ModelCallCount);
+            }
+
+            if (_remainingToolCalls is int remainingToolCalls)
+            {
+                var reservedToolCalls = reservation.ReservedToolCalls
+                    ?? throw new InvalidOperationException(
+                        "The Harness has no tool-call reservation to release.");
+                _remainingToolCalls = checked(
+                    remainingToolCalls
+                    + reservedToolCalls
+                    - result.ToolCallCount);
+            }
         }
     }
 }

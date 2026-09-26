@@ -187,6 +187,67 @@ public sealed class MultimodalAgentStreamingTests
                 Assert.IsType<MultimodalMessage>(result.Transcript[3]).Contents[0]).Text);
     }
 
+    [Fact]
+    public async Task UnlimitedLimitsAllowMultipleMultimodalModelAndToolAttempts()
+    {
+        var callImage = new ImageContent(new ImageMedia(
+            new InlineMediaSource(new byte[] { 1 }),
+            new MediaMimeType("image/png")));
+        var resultImage = new ImageContent(new ImageMedia(
+            new InlineMediaSource(new byte[] { 2 }),
+            new MediaMimeType("image/png")));
+        var client = new ToolCallingStreamingClient(callImage);
+        var executor = new RecordingMultimodalToolExecutor(resultImage);
+        var agent = new MultimodalAgent(
+            client,
+            (_, _) => ValueTask.FromResult(0),
+            executor);
+        var request = new MultimodalAgentRunRequest(
+            Guid.NewGuid(),
+            [new MultimodalMessage(
+                MultimodalChatRole.User,
+                [new TextContent("question")])],
+            MultimodalAgentRunLimits.Unlimited);
+
+        var result = await agent.RunAsync(request);
+
+        Assert.Equal(MultimodalAgentRunStopReason.Completed, result.StopReason);
+        Assert.Equal(2, result.ModelCallCount);
+        Assert.Equal(1, result.ToolCallCount);
+        Assert.Equal(2, client.Requests.Count);
+    }
+
+    [Fact]
+    public async Task UnlimitedMultimodalModelCallsStillHonorFiniteToolCallLimit()
+    {
+        var callImage = new ImageContent(new ImageMedia(
+            new InlineMediaSource(new byte[] { 1 }),
+            new MediaMimeType("image/png")));
+        var resultImage = new ImageContent(new ImageMedia(
+            new InlineMediaSource(new byte[] { 2 }),
+            new MediaMimeType("image/png")));
+        var client = new ToolCallingStreamingClient(callImage);
+        var executor = new RecordingMultimodalToolExecutor(resultImage);
+        var agent = new MultimodalAgent(
+            client,
+            (_, _) => ValueTask.FromResult(0),
+            executor);
+        var request = new MultimodalAgentRunRequest(
+            Guid.NewGuid(),
+            [new MultimodalMessage(
+                MultimodalChatRole.User,
+                [new TextContent("question")])],
+            new MultimodalAgentRunLimits(null, 0, null));
+
+        var result = await agent.RunAsync(request);
+
+        Assert.Equal(MultimodalAgentRunStopReason.ToolCallLimitReached, result.StopReason);
+        Assert.Equal(1, result.ModelCallCount);
+        Assert.Equal(0, result.ToolCallCount);
+        Assert.Single(client.Requests);
+        Assert.Null(executor.Call);
+    }
+
     private static MultimodalChatCapabilities CreateCapabilities(
         bool supportsTools = false)
     {

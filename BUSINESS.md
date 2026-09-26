@@ -30,7 +30,8 @@ library's public API.
   foundations, media values, and immediate generation clients.
 - Crystal.Tools adds independent text and multimodal tool registration, policy,
   and execution families.
-- Crystal.Agents adds independent bounded text and multimodal model/tool loops.
+- Crystal.Agents adds independent text and multimodal model/tool loops with
+  caller-configured optional limits.
 - Crystal.Harness adds independent text and multimodal Agent composition and
   shared limits.
 - Crystal.Pipelines adds type-safe, caller-owned asynchronous operation and
@@ -114,7 +115,7 @@ depending on tool execution, Agent runtime, or Harness composition.
 ### Agent
 
 - A prompt-free model/tool loop.
-- Required finite model-call, tool-call, and duration limits.
+- Independently finite or unlimited model-call, tool-call, and duration limits.
 - Caller-supplied candidate selection.
 - Typed events containing exact model requests, responses, and tool results.
 - Exact transcript preservation and explicit stop reasons.
@@ -133,6 +134,7 @@ depending on tool execution, Agent runtime, or Harness composition.
 - Named Agent registration.
 - Explicit parent-child invocation.
 - Shared depth, model-call, tool-call, duration, and cancellation boundaries.
+- Each Harness budget dimension can be finite or explicitly unlimited.
 - Invocation ancestry and event forwarding.
 - No built-in router, supervisor prompt, graph, or persistence store.
 - A separate multimodal Harness registry, session, budget, event, and result

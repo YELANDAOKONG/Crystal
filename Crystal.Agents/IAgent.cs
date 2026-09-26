@@ -1,7 +1,7 @@
 namespace Crystal.Agents;
 
 /// <summary>
-/// Defines one bounded, prompt-free text Agent.
+/// Defines one prompt-free text Agent with caller-configured optional limits.
 /// </summary>
 public interface IAgent
 {

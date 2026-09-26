@@ -28,6 +28,8 @@ change. Implementation must never become the only source of truth.
   Existing text interfaces remain usable without accepting or returning media.
 - Text and multimodal Agents consume optional typed Chat streams when configured
   clients provide them, forwarding exact events before selecting a candidate.
+- Agent and Harness budget dimensions may be independently finite or explicitly
+  unlimited; cancellation remains effective in either case.
 - The current release line contains no generic attachment or file-content bag,
   PDF contract, batch generation, generated-media streaming, resumable generation
   operation, or realtime media session.

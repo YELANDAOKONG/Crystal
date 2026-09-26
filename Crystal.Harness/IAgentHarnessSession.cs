@@ -1,7 +1,7 @@
 namespace Crystal.Harness;
 
 /// <summary>
-/// Defines one bounded Agent Harness session.
+/// Defines one Agent Harness session with optional shared limits.
 /// </summary>
 public interface IAgentHarnessSession
 {
@@ -11,7 +11,7 @@ public interface IAgentHarnessSession
     Guid SessionId { get; }
 
     /// <summary>
-    /// Gets the finite shared session limits.
+    /// Gets the caller-configured optional shared session limits.
     /// </summary>
     HarnessLimits Limits { get; }
 

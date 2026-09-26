@@ -1,12 +1,12 @@
 namespace Crystal.Multimodal.Harness;
 
-/// <summary>Defines one bounded multimodal Agent Harness session.</summary>
+/// <summary>Defines one multimodal Agent Harness session with optional shared limits.</summary>
 public interface IMultimodalAgentHarnessSession
 {
     /// <summary>Gets the session identifier.</summary>
     Guid SessionId { get; }
 
-    /// <summary>Gets the finite shared session limits.</summary>
+    /// <summary>Gets the caller-configured optional shared session limits.</summary>
     MultimodalHarnessLimits Limits { get; }
 
     /// <summary>Invokes one registered multimodal Agent.</summary>

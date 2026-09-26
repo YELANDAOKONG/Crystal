@@ -14,7 +14,7 @@ public sealed record MultimodalAgentInvocationRequest
     /// </param>
     /// <param name="agentName">The registered multimodal Agent name.</param>
     /// <param name="items">The exact ordered initial transcript.</param>
-    /// <param name="limits">The requested per-Agent finite limits.</param>
+    /// <param name="limits">The requested per-Agent optional limits.</param>
     /// <param name="parentInvocationId">
     /// The optional parent invocation in the same session.
     /// </param>

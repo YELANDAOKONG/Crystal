@@ -57,10 +57,10 @@ public sealed class AgentHarness
     public IReadOnlyList<AgentName> AgentNames { get; }
 
     /// <summary>
-    /// Creates an independent bounded Harness session.
+    /// Creates an independent Harness session with optional shared limits.
     /// </summary>
     /// <param name="sessionId">The caller-supplied non-empty session identifier.</param>
-    /// <param name="limits">The finite shared session limits.</param>
+    /// <param name="limits">The caller-configured optional shared limits.</param>
     /// <param name="sessionCancellationToken">
     /// A token shared by every invocation in the session.
     /// </param>
