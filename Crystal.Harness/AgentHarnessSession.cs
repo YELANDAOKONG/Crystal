@@ -109,6 +109,12 @@ public sealed class AgentHarnessSession : IAgentHarnessSession
             effectiveLimits,
             request.Reasoning);
 
+        using var operationSource =
+            CancellationTokenSource.CreateLinkedTokenSource(
+                _sessionCancellationToken,
+                cancellationToken);
+        operationSource.Token.ThrowIfCancellationRequested();
+
         yield return new HarnessInvocationStartedEvent(
             SessionId,
             request.InvocationId,
@@ -116,11 +122,7 @@ public sealed class AgentHarnessSession : IAgentHarnessSession
             request.ParentInvocationId,
             sequence++,
             effectiveLimits);
-
-        using var operationSource =
-            CancellationTokenSource.CreateLinkedTokenSource(
-                _sessionCancellationToken,
-                cancellationToken);
+        operationSource.Token.ThrowIfCancellationRequested();
 
         AgentRunResult? agentResult = null;
 
@@ -129,6 +131,7 @@ public sealed class AgentHarnessSession : IAgentHarnessSession
                 operationSource.Token)
             .ConfigureAwait(false))
         {
+            operationSource.Token.ThrowIfCancellationRequested();
             if (agentResult is not null)
             {
                 throw new InvalidOperationException(
@@ -147,7 +150,10 @@ public sealed class AgentHarnessSession : IAgentHarnessSession
                 request.ParentInvocationId,
                 sequence++,
                 agentEvent);
+            operationSource.Token.ThrowIfCancellationRequested();
         }
+
+        operationSource.Token.ThrowIfCancellationRequested();
 
         if (agentResult is null)
         {
@@ -164,6 +170,8 @@ public sealed class AgentHarnessSession : IAgentHarnessSession
             AgentInvocationOutcome.Completed,
             request.ParentInvocationId,
             agentResult);
+
+        operationSource.Token.ThrowIfCancellationRequested();
 
         yield return new HarnessInvocationCompletedEvent(
             SessionId,

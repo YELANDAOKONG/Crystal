@@ -331,6 +331,12 @@ Agents and supplies parent invocation identifiers. The session:
 - propagates session and invocation cancellation; and
 - wraps Agent events with session, Agent, invocation, and parent identifiers.
 
+Both Harness families check linked session and invocation cancellation before
+starting an Agent, after receiving each Agent event, and after event yields.
+An Agent implementation that ignores its token cannot cause a canceled
+invocation to forward a late event or emit a normal Harness completion.
+An invocation canceled after reservation retains that capacity conservatively.
+
 Each Harness maximum may be null, meaning no configured shared bound. Unlimited
 sets depth, model calls, tool calls, and duration to null. A finite session
 maximum narrows an unlimited per-Agent request; an unlimited shared maximum

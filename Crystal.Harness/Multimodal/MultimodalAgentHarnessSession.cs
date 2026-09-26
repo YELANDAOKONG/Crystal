@@ -111,6 +111,12 @@ public sealed class MultimodalAgentHarnessSession
             effectiveLimits,
             request.Reasoning);
 
+        using var operationSource =
+            CancellationTokenSource.CreateLinkedTokenSource(
+                _sessionCancellationToken,
+                cancellationToken);
+        operationSource.Token.ThrowIfCancellationRequested();
+
         yield return new MultimodalHarnessInvocationStartedEvent(
             SessionId,
             request.InvocationId,
@@ -118,11 +124,7 @@ public sealed class MultimodalAgentHarnessSession
             request.ParentInvocationId,
             sequence++,
             effectiveLimits);
-
-        using var operationSource =
-            CancellationTokenSource.CreateLinkedTokenSource(
-                _sessionCancellationToken,
-                cancellationToken);
+        operationSource.Token.ThrowIfCancellationRequested();
 
         MultimodalAgentRunResult? agentResult = null;
 
@@ -131,6 +133,7 @@ public sealed class MultimodalAgentHarnessSession
                 operationSource.Token)
             .ConfigureAwait(false))
         {
+            operationSource.Token.ThrowIfCancellationRequested();
             if (agentResult is not null)
             {
                 throw new InvalidOperationException(
@@ -149,7 +152,10 @@ public sealed class MultimodalAgentHarnessSession
                 request.ParentInvocationId,
                 sequence++,
                 agentEvent);
+            operationSource.Token.ThrowIfCancellationRequested();
         }
+
+        operationSource.Token.ThrowIfCancellationRequested();
 
         if (agentResult is null)
         {
@@ -166,6 +172,8 @@ public sealed class MultimodalAgentHarnessSession
             MultimodalAgentInvocationOutcome.Completed,
             request.ParentInvocationId,
             agentResult);
+
+        operationSource.Token.ThrowIfCancellationRequested();
 
         yield return new MultimodalHarnessInvocationCompletedEvent(
             SessionId,

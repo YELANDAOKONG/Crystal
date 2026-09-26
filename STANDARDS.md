@@ -211,6 +211,9 @@ Tests must prove:
 - Concurrent invocations reserve shared call capacity before they start.
 - Successful invocations return unused reservation.
 - Failed or abandoned invocations conservatively retain their reservation.
+- Both Harness families check linked cancellation at invocation and forwarding
+  boundaries. A custom Agent that ignores cancellation cannot produce a late
+  forwarded event or normal Harness completion after cancellation is observed.
 - Parent identifiers must refer to invocations registered in the same session.
 - Routing and topology remain caller-owned.
 - Session history storage, process-spanning recovery, and checkpointing belong
