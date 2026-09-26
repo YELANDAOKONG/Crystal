@@ -140,6 +140,8 @@ depending on tool execution, Agent runtime, or Harness composition.
 - Independent ordered middleware composition for asynchronous event streams.
 - Exact request, response, event, exception, and cancellation behavior unless
   caller-owned middleware explicitly changes it.
+- Opt-in timing and outcome observations without request, response, event, or
+  exception payloads; the observer and its sink remain caller-owned.
 
 ## Meaning of neutral
 

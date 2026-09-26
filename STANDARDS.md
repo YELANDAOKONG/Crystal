@@ -200,6 +200,10 @@ Tests must prove:
   exceptions on their own.
 - Any model-bound content emitted by middleware is caller-authored content and
   remains subject to protocol provenance requirements.
+- Built-in observations contain no request, response, event, exception, or
+  operation argument. Operation names are caller-supplied stable identifiers
+  without sensitive content. Stream observations cover enumeration through
+  disposal, including early abandonment.
 
 ## Dependency decision
 

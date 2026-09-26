@@ -65,6 +65,11 @@ It has no project references and does not know model, Agent, or provider types.
 Middleware is supplied by the caller and runs in declared order, wrapping the
 terminal operation. The pipeline snapshots middleware at construction. It does
 not create messages, intercept hidden global state, or persist results.
+Optional diagnostics report only a caller-supplied stable operation name, a
+start or terminal status, and elapsed time. Stream timing begins on enumeration
+and ends on completion, cancellation, failure, or early disposal. Observer
+callbacks are caller-owned and their exceptions propagate. Crystal provides no
+telemetry exporter or backend.
 
 Namespaces continue to express domain ownership. The Crystal.Tools namespace is
 intentionally present in both Crystal and Crystal.Tools because its protocol

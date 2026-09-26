@@ -201,7 +201,12 @@ Deliverables:
 3. tests for ordering, cancellation, failures, and construction invariants;
 4. explicit adapters from existing client families where they add value without
    changing the model-facing protocol; and
-5. opt-in diagnostics and policy middleware with safe default disclosure.
+5. opt-in content-free diagnostics, followed by caller-configured policy
+   middleware with safe default disclosure.
+
+Current progress: operation and streaming middleware, content-free timing and
+outcome diagnostics, and their behavioral tests are implemented. Typed client
+adapters and general policy middleware remain open.
 
 Exit criteria: callers can compose cross-cutting behavior around supported
 operations without a provider dependency or Crystal-authored model text.

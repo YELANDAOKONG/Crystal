@@ -72,6 +72,12 @@ Middleware runs in declared order. Any request or response transformation is
 explicit caller code and must satisfy the same content provenance rules as a
 direct client call.
 
+`PipelineDiagnostics.ObserveAsync` and `ObserveStreaming` can be added as
+middleware. They report a stable caller-supplied operation name, start and
+terminal status, and elapsed time. Stream timing spans enumeration through
+disposal. Observations contain no request, response, event, or exception data;
+the caller supplies an observer and any telemetry sink.
+
 ## Using Crystal
 
 Crystal does not connect to a model provider by itself. An external adapter
