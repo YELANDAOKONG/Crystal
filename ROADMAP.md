@@ -155,6 +155,11 @@ Deliverables:
 - review whether all current JSON dependencies remain necessary; and
 - establish the first public compatibility baseline.
 
+Current progress: the xUnit suite covers generic pipelines, client wrappers,
+text and multimodal Agent streaming, media-source ownership, and text Harness
+ancestry and shared-budget behavior. The compatibility baseline, package
+metadata, CI, and broader contract coverage remain open.
+
 Until the suite covers existing contracts, the solution build remains the
 repository-wide verification gate.
 
@@ -189,7 +194,8 @@ Deferred Phase 6 lifecycles:
    remote cancellation semantics;
 4. stateful realtime audio and video sessions; and
 5. broader automated protocol and runtime tests under the now-authorized xUnit
-   project; media-source ownership tests are implemented.
+   project; media-source ownership and multimodal Agent streaming/tool replay
+   tests are implemented.
 
 No Phase 6 production type may be a placeholder media abstraction, generic
 option bag, provider resource handle, or universal edit mode.
