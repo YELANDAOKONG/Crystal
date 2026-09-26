@@ -8,7 +8,8 @@ names may change while the design documents and implementation change together.
 
 ## Dependency direction
 
-Crystal ships as four production assemblies with one-way project references:
+Crystal currently ships five production assemblies. Four form a one-way
+runtime dependency chain; Crystal.Pipelines is an independent library:
 
 ~~~text
 Crystal.Harness
@@ -18,6 +19,8 @@ Crystal.Agents
 Crystal.Tools
     ↓
 Crystal
+
+Crystal.Pipelines (no project references)
 ~~~
 
 Crystal.Agents also references Crystal directly. Crystal.Harness also references
@@ -54,6 +57,14 @@ and runtime execution. It references Crystal and Crystal.Tools.
 Owns independent text and multimodal Harness contracts, events, reservations,
 sessions, and explicit Agent composition. It references Crystal and
 Crystal.Agents.
+
+### Crystal.Pipelines
+
+Owns generic asynchronous operation and asynchronous event-stream middleware.
+It has no project references and does not know model, Agent, or provider types.
+Middleware is supplied by the caller and runs in declared order, wrapping the
+terminal operation. The pipeline snapshots middleware at construction. It does
+not create messages, intercept hidden global state, or persist results.
 
 Namespaces continue to express domain ownership. The Crystal.Tools namespace is
 intentionally present in both Crystal and Crystal.Tools because its protocol
@@ -259,6 +270,10 @@ No model output automatically routes to another Agent. Callers build routers,
 graphs, supervisors, handoffs, or peer topologies around the explicit invocation
 boundary.
 
+Harness sessions are in-memory execution boundaries. The caller owns durable
+conversation history, session storage, and restoration across process lifetimes.
+Crystal does not provide a checkpoint store or restore a prior Harness session.
+
 Crystal.Multimodal.Harness is an independent registry, session, reservation,
 invocation, event, and result family for IMultimodalAgent. Text and multimodal
 Agents cannot be mixed accidentally in one built-in registry. Both families
@@ -277,6 +292,8 @@ apply the same explicit shared-budget and ancestry semantics.
 - Invalid contracts, adapter failures, unhandled tool failures, and broken
   implementations are exceptions.
 - Cancellation is propagated and is never converted into an ordinary failure.
+- A pipeline may change a request, response, or event only through explicitly
+  supplied caller middleware; the pipeline runtime itself preserves them.
 
 ## Streaming semantics
 

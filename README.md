@@ -2,7 +2,7 @@
 
 Crystal is a provider-neutral C# library for text and multimodal model access,
 image, audio, and video generation, tool execution, bounded Agents, and explicit
-Agent Harness composition.
+Agent Harness composition, and generic asynchronous operation pipelines.
 
 Text and multimodal Chat, Tool, Agent, and Harness APIs are independent. Existing
 text interfaces remain unchanged and text-only.
@@ -17,17 +17,59 @@ text interfaces remain unchanged and text-only.
 - Independent target-output image, audio, and video generation clients.
 - Explicit candidate, tool, approval, limit, and composition policies.
 - Immutable public data contracts.
+- Caller-owned ordered middleware for typed operations and event streams.
+- Caller-owned conversation storage and reconstruction across invocations.
 
 ## Project status
 
 Crystal targets net10.0 and has no compatibility baseline yet. The current
 repository implements the text foundation, optional typed multimodal Chat
-streaming, and the immediate-generation scope described in ROADMAP.md. A test
-project has not yet been authorized; the executable quality gate is:
+streaming, the immediate-generation scope, and an independent operation
+pipeline library described in ROADMAP.md. The current quality checks are:
 
 ~~~bash
 dotnet build Crystal.sln
+dotnet test Crystal.Tests/Crystal.Tests.csproj
 ~~~
+
+Crystal does not store or restore application sessions. Callers retain the
+conversation and other state they need, then supply it in a later request.
+
+### Operation pipelines
+
+`Crystal.Pipelines` composes caller-owned middleware around any typed
+asynchronous operation. The same pattern works for Chat, Completion, Embedding,
+generation, tools, and application operations. A separate `StreamingPipeline`
+preserves the `IAsyncEnumerable<T>` lifecycle.
+
+~~~csharp
+using Crystal.Chat;
+using Crystal.Pipelines;
+
+namespace Example;
+
+public static class PipelineExample
+{
+    public static Task<ChatResponse> CompleteAsync(
+        IChatClient client,
+        ChatRequest request,
+        CancellationToken cancellationToken)
+    {
+        AsyncMiddleware<ChatRequest, ChatResponse> middleware = next =>
+            (exactRequest, token) => next(exactRequest, token);
+
+        var pipeline = new AsyncPipeline<ChatRequest, ChatResponse>(
+            client.CompleteAsync,
+            [middleware]);
+
+        return pipeline.InvokeAsync(request, cancellationToken);
+    }
+}
+~~~
+
+Middleware runs in declared order. Any request or response transformation is
+explicit caller code and must satisfy the same content provenance rules as a
+direct client call.
 
 ## Using Crystal
 

@@ -5,6 +5,9 @@
 Crystal ships no provider implementation. This document records the portable
 semantics an external adapter must preserve across current text, multimodal, and
 immediate-generation protocols.
+The compatibility target is provider behavior and portable data semantics;
+Crystal does not implement API compatibility or migration for another .NET
+library.
 Named services are compatibility evidence only; their names and SDK types must
 not enter Crystal public contracts.
 

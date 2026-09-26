@@ -45,6 +45,12 @@ baseline. Design documents and code must change together.
   Message text is incremental; other typed content is delivered complete.
   Multimodal Agent forwards provider events and assembles the complete response
   before candidate selection and tool execution.
+- 2026-09-27: Growth targets portable capabilities rather than API compatibility
+  or migration support for named frameworks.
+- 2026-09-27: Session storage, checkpointing, and process-spanning restoration
+  remain application responsibilities.
+- 2026-09-27: The user authorized an xUnit test project and additional class
+  library projects. Crystal.Pipelines begins generic middleware composition.
 
 ## Phase 0 — Product and architecture reset
 
@@ -136,18 +142,18 @@ Deliverables:
 
 ## Phase 5 — Quality baseline
 
-Status: deferred pending authorization.
+Status: in progress; xUnit test project authorized.
 
-Future decisions:
+Deliverables:
 
-- select and add a test framework;
 - add unit, protocol, Agent, and Harness contract tests;
 - add API compatibility tooling;
 - decide package metadata and CI;
 - review whether all current JSON dependencies remain necessary; and
 - establish the first public compatibility baseline.
 
-Until then, dotnet build Crystal.sln is the executable verification.
+Until the suite covers existing contracts, the solution build remains the
+repository-wide verification gate.
 
 ## Phase 6 — Multimodal and media generation
 
@@ -179,7 +185,73 @@ Deferred Phase 6 lifecycles:
 3. resumable long-running operation handles, polling, persistence, and explicit
    remote cancellation semantics;
 4. stateful realtime audio and video sessions; and
-5. automated protocol and runtime tests after a test project is authorized.
+5. automated protocol and runtime tests under the now-authorized xUnit project.
 
 No Phase 6 production type may be a placeholder media abstraction, generic
 option bag, provider resource handle, or universal edit mode.
+
+## Phase 7 — General operation composition
+
+Status: in progress.
+
+Deliverables:
+
+1. generic typed asynchronous middleware composition;
+2. independent middleware composition for typed asynchronous streams;
+3. tests for ordering, cancellation, failures, and construction invariants;
+4. explicit adapters from existing client families where they add value without
+   changing the model-facing protocol; and
+5. opt-in diagnostics and policy middleware with safe default disclosure.
+
+Exit criteria: callers can compose cross-cutting behavior around supported
+operations without a provider dependency or Crystal-authored model text.
+
+## Phase 8 — Portable model and tool semantics
+
+Status: planned.
+
+Evaluate structured output, richer embedding inputs, tool schema binding, and
+text Agent consumption of client streams against multiple distinct provider
+shapes. Add only semantics that can be specified without a provider identifier,
+wire DTO, or generic option bag. Each addition needs lossless ordering rules,
+unsupported-feature behavior, and stream/non-stream equivalence tests.
+
+Exit criteria: an external adapter can implement each added contract without
+referencing Agent internals, and an unsupported request fails explicitly.
+
+## Phase 9 — Opt-in runtime policies
+
+Status: planned.
+
+Build caller-configured context selection, retries, caching, routing,
+observability, and human-input boundaries on explicit operation interfaces.
+Every policy declares its effect on requests, responses, cost, and side effects.
+No built-in policy authors model-bound language. Applications own any durable
+conversation history and supply the state for each new invocation.
+
+Exit criteria: a recording client can identify the origin of every model-bound
+item and verify cancellation, limits, and failure disclosure with each policy.
+
+## Phase 10 — In-memory orchestration
+
+Status: planned.
+
+Add typed nodes, edges, conditional routing, bounded fan-out and fan-in, and
+explicit Agent handoff. Runs execute within one process and expose ordered
+events, shared budgets, and caller-visible pending human input. Completion or
+interruption returns data that an application may store, but Crystal does not
+store sessions, checkpoint them, or resume a prior runtime instance.
+
+Exit criteria: deterministic scenarios prove branch selection, result order,
+budget accounting, cancellation, and no duplicate tool start within a live run.
+
+## Future media lifecycles
+
+Evaluate batch generation, generated-media streaming, resumable remote
+generation, and realtime sessions as separate contracts when portable use cases
+and lifecycle rules are established. Remote generation handles must not be
+confused with Crystal session recovery.
+
+Every phase requires a concrete use case, an ownership decision, and a
+behavioral acceptance test before adding public contracts. No migration or
+compatibility layer for a named framework is planned.

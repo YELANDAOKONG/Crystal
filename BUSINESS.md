@@ -9,7 +9,9 @@ contracts and deterministic execution infrastructure while leaving models,
 transport, prompts, tools, policies, and application state to external code.
 
 Crystal consists of reusable libraries. It does not host an application, expose
-a service, select a model, or own an end-user experience.
+a service, select a model, or own an end-user experience. Its growth is driven by
+portable use cases and explicit semantics, not compatibility with another
+library's public API.
 
 ## Intended users
 
@@ -31,6 +33,9 @@ a service, select a model, or own an end-user experience.
 - Crystal.Agents adds independent bounded text and multimodal model/tool loops.
 - Crystal.Harness adds independent text and multimodal Agent composition and
   shared limits.
+- Crystal.Pipelines adds type-safe, caller-owned asynchronous operation and
+  streaming middleware composition without depending on a particular model,
+  tool, or provider contract.
 
 Consumers reference only the layers required by their use case. A provider
 adapter can implement text, multimodal, or generation capabilities without
@@ -126,6 +131,13 @@ depending on tool execution, Agent runtime, or Harness composition.
 - A separate multimodal Harness registry, session, budget, event, and result
   family.
 
+### Operation pipelines
+
+- Ordered middleware composition for any asynchronous request and response.
+- Independent ordered middleware composition for asynchronous event streams.
+- Exact request, response, event, exception, and cancellation behavior unless
+  caller-owned middleware explicitly changes it.
+
 ## Meaning of neutral
 
 ### Prompt-neutral
@@ -168,6 +180,8 @@ The current release does not include:
 - built-in search, filesystem, shell, clock, network, or other concrete tools;
 - retrieval stores, memory stores, persistence, hosting, UI, or telemetry
   backends;
+- framework-owned session storage, checkpointing, or restoration; applications
+  retain and resupply the state needed for later invocations;
 - automatic retries, context truncation, routing, planning, or side-effect
   approval.
 

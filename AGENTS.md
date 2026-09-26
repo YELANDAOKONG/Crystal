@@ -29,6 +29,10 @@ change. Implementation must never become the only source of truth.
 - The current release line contains no generic attachment or file-content bag,
   PDF contract, batch generation, generated-media streaming, resumable generation
   operation, or realtime media session.
+- Crystal.Pipelines is an independent, generic middleware library for typed
+  asynchronous operations and event streams.
+- Session storage and recovery across process lifetimes belong to callers.
+  Crystal does not own a durable session store or checkpoint restoration.
 - Future media lifecycles must remain additive and explicit. Do not add
   placeholders that reserve names without implemented portable semantics.
 
@@ -75,12 +79,13 @@ registered-tool output. It may not produce natural-language content for a model.
 
 ## Verification
 
-Run the narrowest relevant build while developing and the full available check
-before handoff:
+Run the narrowest relevant build and tests while developing, then the full
+available checks before handoff:
 
 ~~~bash
 dotnet build Crystal.sln
+dotnet test Crystal.Tests/Crystal.Tests.csproj
 ~~~
 
-No test project is currently authorized. Do not claim automated test coverage,
-and do not run dotnet test as though a test suite exists.
+The user authorized the xUnit test project and additional class libraries on
+2026-09-27. No other dependency changes are implied by that authorization.

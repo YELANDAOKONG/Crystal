@@ -33,6 +33,8 @@
 - Crystal.Tools references only Crystal.
 - Crystal.Agents references Crystal and Crystal.Tools.
 - Crystal.Harness references Crystal and Crystal.Agents.
+- Crystal.Pipelines has no project references and remains usable for any typed
+  asynchronous request/response or event stream.
 - Production project references are one-way and contain no cycle.
 - Text and multimodal model-facing tool protocol values remain in Crystal even
   though executable tool infrastructure belongs to Crystal.Tools.
@@ -179,6 +181,20 @@ Tests, once authorized, must prove:
 - Failed or abandoned invocations conservatively retain their reservation.
 - Parent identifiers must refer to invocations registered in the same session.
 - Routing and topology remain caller-owned.
+- Session history storage, process-spanning recovery, and checkpointing belong
+  to the consuming application. A new process receives caller-reconstructed
+  inputs; Crystal does not restore a prior session.
+
+## Pipeline execution
+
+- Middleware is caller-owned and ordered. The first declared middleware is the
+  outermost wrapper around the terminal operation.
+- Construction snapshots middleware and rejects null entries or wrappers that
+  return no operation.
+- Pipelines do not modify requests, responses, streams, cancellation, or
+  exceptions on their own.
+- Any model-bound content emitted by middleware is caller-authored content and
+  remains subject to protocol provenance requirements.
 
 ## Dependency decision
 
@@ -190,10 +206,12 @@ accepted until the dependency decision changes.
 
 ## Verification
 
-The currently authorized executable check is:
+The required solution build is:
 
 ~~~bash
 dotnet build Crystal.sln
 ~~~
 
-There is no authorized test project. Report that limitation explicitly.
+The authorized xUnit project is Crystal.Tests. Run its relevant tests while
+developing and the complete suite before handoff. Tests must cover externally
+observable behavior and invariants, not merely duplicate implementation logic.
