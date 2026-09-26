@@ -19,6 +19,11 @@ change. Implementation must never become the only source of truth.
 - Crystal is a reusable C#/.NET library, not an application or hosted service.
 - The current release line supports text embedding, text completion, text chat,
   text tool results, Agent execution, and Harness composition.
+- An independent optional multimodal Embedding client accepts ordered typed
+  text, image, audio, and video content inputs without widening text Embedding.
+- Completion and text or multimodal Chat may carry a caller-authored hard JSON
+  Schema requirement for final text output. Agents and Harnesses forward it
+  unchanged; adapters reject unsupported requests.
 - The current release line also supports explicit media sources, typed image,
   audio, and video values, non-streaming and optional typed streaming
   multimodal Chat, Tool, Agent, and Harness families, and immediate image,
@@ -34,6 +39,8 @@ change. Implementation must never become the only source of truth.
   operation, or realtime media session.
 - Crystal.Pipelines is an independent, generic middleware library for typed
   asynchronous operations and event streams.
+- Optional exception retries in Crystal.Pipelines require a caller decision
+  after each failure and a finite attempt bound; there is no default retry.
 - Crystal.Decorators applies those pipelines to current client contracts
   without widening their portable capability or streaming support.
 - Session storage and recovery across process lifetimes belong to callers.

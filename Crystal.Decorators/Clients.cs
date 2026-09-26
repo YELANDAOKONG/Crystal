@@ -5,6 +5,7 @@ using Crystal.Generation.Audio;
 using Crystal.Generation.Images;
 using Crystal.Generation.Video;
 using Crystal.Multimodal.Chat;
+using Crystal.Multimodal.Embeddings;
 using Crystal.Pipelines;
 
 namespace Crystal.Decorators;
@@ -92,6 +93,16 @@ public static class Clients
         IEmbeddingClient client,
         IEnumerable<AsyncMiddleware<EmbeddingRequest, EmbeddingResponse>> middleware) =>
         new EmbeddingClientAdapter(client, middleware);
+
+    /// <summary>Wraps multimodal Embedding while preserving its capabilities.</summary>
+    /// <param name="client">The configured multimodal Embedding client.</param>
+    /// <param name="middleware">Ordered caller-owned middleware.</param>
+    /// <returns>The wrapped client with the same capability profile.</returns>
+    public static IMultimodalEmbeddingClient ForMultimodalEmbedding(
+        IMultimodalEmbeddingClient client,
+        IEnumerable<AsyncMiddleware<MultimodalEmbeddingRequest,
+            MultimodalEmbeddingResponse>> middleware) =>
+        new MultimodalEmbeddingClientAdapter(client, middleware);
 
     /// <summary>Wraps immediate image generation without changing capabilities.</summary>
     /// <param name="client">The configured image-generation client.</param>

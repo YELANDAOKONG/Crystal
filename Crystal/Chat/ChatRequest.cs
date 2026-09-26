@@ -15,10 +15,12 @@ public sealed record ChatRequest
     /// <param name="items">The ordered transcript items.</param>
     /// <param name="tools">The caller-authored tool definitions.</param>
     /// <param name="reasoning">Optional portable reasoning hints.</param>
+    /// <param name="jsonOutput">Optional hard final JSON output requirement.</param>
     public ChatRequest(
         IEnumerable<ChatItem> items,
         IEnumerable<ToolDefinition>? tools = null,
-        ReasoningOptions? reasoning = null)
+        ReasoningOptions? reasoning = null,
+        JsonOutputRequirement? jsonOutput = null)
     {
         Items = CollectionSnapshot.Create(items, nameof(items));
         Tools = CollectionSnapshot.Create(
@@ -35,6 +37,7 @@ public sealed record ChatRequest
         }
 
         Reasoning = reasoning;
+        JsonOutput = jsonOutput;
     }
 
     /// <summary>
@@ -51,6 +54,9 @@ public sealed record ChatRequest
     /// Gets optional reasoning hints.
     /// </summary>
     public ReasoningOptions? Reasoning { get; }
+
+    /// <summary>Gets the optional hard final JSON output requirement.</summary>
+    public JsonOutputRequirement? JsonOutput { get; }
 
     /// <inheritdoc />
     public override string ToString() => nameof(ChatRequest);

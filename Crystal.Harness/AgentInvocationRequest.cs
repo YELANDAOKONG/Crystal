@@ -23,13 +23,15 @@ public sealed record AgentInvocationRequest
     /// The optional parent invocation in the same session.
     /// </param>
     /// <param name="reasoning">Optional portable reasoning hints.</param>
+    /// <param name="jsonOutput">Optional hard final JSON output requirement.</param>
     public AgentInvocationRequest(
         Guid invocationId,
         AgentName agentName,
         IEnumerable<ChatItem> items,
         AgentRunLimits limits,
         Guid? parentInvocationId = null,
-        ReasoningOptions? reasoning = null)
+        ReasoningOptions? reasoning = null,
+        JsonOutputRequirement? jsonOutput = null)
     {
         if (invocationId == Guid.Empty)
         {
@@ -61,6 +63,7 @@ public sealed record AgentInvocationRequest
         Limits = limits;
         ParentInvocationId = parentInvocationId;
         Reasoning = reasoning;
+        JsonOutput = jsonOutput;
     }
 
     /// <summary>
@@ -92,4 +95,7 @@ public sealed record AgentInvocationRequest
     /// Gets optional portable reasoning hints.
     /// </summary>
     public ReasoningOptions? Reasoning { get; }
+
+    /// <summary>Gets the optional hard final JSON output requirement.</summary>
+    public JsonOutputRequirement? JsonOutput { get; }
 }

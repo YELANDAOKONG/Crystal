@@ -41,6 +41,8 @@
 - Production project references are one-way and contain no cycle.
 - Text and multimodal model-facing tool protocol values remain in Crystal even
   though executable tool infrastructure belongs to Crystal.Tools.
+- Multimodal Embedding is an independent optional Crystal protocol family;
+  its decorator uses only Crystal and Crystal.Pipelines.
 - Shared build settings live in Directory.Build.props.
 - CollectionSnapshot is shared as linked internal source. Do not make common
   implementation helpers public merely to cross an assembly boundary.
@@ -95,6 +97,9 @@
   serialization attributes.
 - Do not add a generic extension-data dictionary instead of a designed
   contract.
+- A caller-authored JsonOutputRequirement is a hard final-text constraint,
+  separate from tool input schemas. Snapshot its schema, forward it unchanged
+  through Agent and Harness, and reject unsupported adapter combinations.
 - Public APIs require XML documentation before a preview package.
 
 ## Protocol provenance
@@ -114,6 +119,8 @@ Tests must prove:
   media;
 - no error, retry, limit, selection, approval, or context behavior injects a
   message;
+- a JSON output requirement never causes Crystal to add a formatting prompt,
+  parse, or repair model output;
 - event objects expose every configured transition; and
 - streamed Agent events preserve each exact client event and assemble complete
   candidates before selection or tool execution; and
@@ -144,6 +151,9 @@ Tests must prove:
   every call; ownership transfers to the caller of OpenReadAsync.
 - Image, audio, and video values require an explicit MIME type. Optional metadata
   reports known facts and is never inferred by runtime code.
+- Multimodal Embedding preserves ordered typed blocks within each input and
+  ordered inputs within each batch. Adapters return one vector per input in the
+  same order and reject unsupported combinations without rewriting media.
 - Capability profiles advertise individual input and output shapes. Do not build
   a provider constraint DSL into core contracts.
 - Generation requirements, including requested output source shape, are hard.
@@ -233,6 +243,10 @@ Tests must prove:
 - Caller policies use the ordinary middleware delegates. A policy may forward,
   reject, or return exact caller-owned output; Crystal has no implicit
   exception-to-content disclosure or separate policy abstraction.
+- Opt-in exception retry middleware requires a positive total attempt bound
+  and a caller decision after each eligible failure. It reuses the same
+  request object and cancellation token, never retries cancellation, and never
+  assumes idempotence, delay, or side-effect safety. Streaming is excluded.
 - Built-in observations contain no request, response, event, exception, or
   operation argument. Operation names are caller-supplied stable identifiers
   without sensitive content. Stream observations cover enumeration through

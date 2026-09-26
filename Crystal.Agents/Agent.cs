@@ -127,7 +127,8 @@ public sealed class Agent : IAgent
             var chatRequest = new ChatRequest(
                 transcript,
                 _toolExecutor?.Definitions,
-                request.Reasoning);
+                request.Reasoning,
+                request.JsonOutput);
             modelCallCount = checked(modelCallCount + 1);
 
             yield return new AgentModelRequestEvent(

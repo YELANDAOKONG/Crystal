@@ -109,7 +109,8 @@ public sealed class MultimodalAgentHarnessSession
             request.InvocationId,
             request.Items,
             effectiveLimits,
-            request.Reasoning);
+            request.Reasoning,
+            request.JsonOutput);
 
         using var operationSource =
             CancellationTokenSource.CreateLinkedTokenSource(

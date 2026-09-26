@@ -14,11 +14,14 @@ text interfaces remain unchanged and text-only.
 - No built-in prompt or runtime-authored model text.
 - No concrete tools.
 - Ordered readable and opaque reasoning preservation.
+- Caller-authored hard JSON Schema requirements for final text output.
 - Explicit media ownership, MIME types, and typed modality capabilities.
+- Independent optional multimodal Embedding over ordered typed content inputs.
 - Independent target-output image, audio, and video generation clients.
 - Explicit candidate, tool, approval, limit, and composition policies.
 - Immutable public data contracts.
 - Caller-owned ordered middleware for typed operations and event streams.
+- Opt-in caller-decided retries for complete asynchronous operations.
 - Caller-owned conversation storage and reconstruction across invocations.
 - Exact text Agent forwarding of provider Chat stream events when available.
 
@@ -26,7 +29,7 @@ text interfaces remain unchanged and text-only.
 
 Crystal targets net10.0 and has no compatibility baseline yet. The current
 repository implements the text foundation, optional typed multimodal Chat
-streaming, the immediate-generation scope, and an independent operation
+streaming, multimodal Embedding, the immediate-generation scope, and an independent operation
 pipeline library. The current quality checks are:
 
 ~~~bash
@@ -85,7 +88,7 @@ disposal. Observations contain no request, response, event, or exception data;
 the caller supplies an observer and any telemetry sink.
 
 `Crystal.Decorators` provides `Clients` for wrapping the
-current Chat, Completion, Embedding, multimodal Chat, and immediate-generation
+current Chat, Completion, text and multimodal Embedding, multimodal Chat, and immediate-generation
 clients. The wrapper keeps optional streaming support and capability profiles.
 For example, `Clients.ForChat(client, middleware)` returns an
 `IStreamingChatClient` at runtime when `client` supports streaming. Supplying
@@ -257,6 +260,12 @@ pronunciation controls, music styles, and other provider-specific audio options
 stay on adapter APIs.
 
 ### Completion and embeddings
+
+`JsonOutputRequirement` carries a caller-authored JSON Schema for normal final
+text output. It is forwarded through Agent and Harness requests, while an
+external adapter enforces the requirement or rejects unsupported combinations.
+`IMultimodalEmbeddingClient` independently embeds ordered typed content blocks;
+the text-only `IEmbeddingClient` stays unchanged.
 
 ~~~csharp
 using System;

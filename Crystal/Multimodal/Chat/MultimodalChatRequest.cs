@@ -11,10 +11,12 @@ public sealed record MultimodalChatRequest
     /// <param name="items">The exact ordered multimodal transcript.</param>
     /// <param name="tools">The caller-authored tool definitions.</param>
     /// <param name="reasoning">Optional portable reasoning hints.</param>
+    /// <param name="jsonOutput">Optional hard final JSON output requirement.</param>
     public MultimodalChatRequest(
         IEnumerable<MultimodalChatItem> items,
         IEnumerable<ToolDefinition>? tools = null,
-        ReasoningOptions? reasoning = null)
+        ReasoningOptions? reasoning = null,
+        JsonOutputRequirement? jsonOutput = null)
     {
         Items = CollectionSnapshot.Create(items, nameof(items));
         Tools = CollectionSnapshot.Create(
@@ -31,6 +33,7 @@ public sealed record MultimodalChatRequest
         }
 
         Reasoning = reasoning;
+        JsonOutput = jsonOutput;
     }
 
     /// <summary>Gets the exact ordered multimodal transcript.</summary>
@@ -41,6 +44,9 @@ public sealed record MultimodalChatRequest
 
     /// <summary>Gets optional portable reasoning hints.</summary>
     public ReasoningOptions? Reasoning { get; }
+
+    /// <summary>Gets the optional hard final JSON output requirement.</summary>
+    public JsonOutputRequirement? JsonOutput { get; }
 
     /// <inheritdoc />
     public override string ToString() => nameof(MultimodalChatRequest);

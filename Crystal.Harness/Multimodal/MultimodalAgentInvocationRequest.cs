@@ -19,13 +19,15 @@ public sealed record MultimodalAgentInvocationRequest
     /// The optional parent invocation in the same session.
     /// </param>
     /// <param name="reasoning">Optional portable reasoning hints.</param>
+    /// <param name="jsonOutput">Optional hard final JSON output requirement.</param>
     public MultimodalAgentInvocationRequest(
         Guid invocationId,
         MultimodalAgentName agentName,
         IEnumerable<MultimodalChatItem> items,
         MultimodalAgentRunLimits limits,
         Guid? parentInvocationId = null,
-        ReasoningOptions? reasoning = null)
+        ReasoningOptions? reasoning = null,
+        JsonOutputRequirement? jsonOutput = null)
     {
         if (invocationId == Guid.Empty)
         {
@@ -57,6 +59,7 @@ public sealed record MultimodalAgentInvocationRequest
         Limits = limits;
         ParentInvocationId = parentInvocationId;
         Reasoning = reasoning;
+        JsonOutput = jsonOutput;
     }
 
     /// <summary>Gets the invocation identifier.</summary>
@@ -76,4 +79,7 @@ public sealed record MultimodalAgentInvocationRequest
 
     /// <summary>Gets optional portable reasoning hints.</summary>
     public ReasoningOptions? Reasoning { get; }
+
+    /// <summary>Gets the optional hard final JSON output requirement.</summary>
+    public JsonOutputRequirement? JsonOutput { get; }
 }

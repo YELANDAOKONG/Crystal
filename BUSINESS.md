@@ -27,7 +27,8 @@ library's public API.
 ## Production assemblies
 
 - Crystal contains provider-adapter contracts, the text and multimodal protocol
-  foundations, media values, and immediate generation clients.
+  foundations, media values, multimodal Embedding, and immediate generation
+  clients.
 - Crystal.Tools adds independent text and multimodal tool registration, policy,
   and execution families.
 - Crystal.Agents adds independent text and multimodal model/tool loops with
@@ -54,6 +55,17 @@ depending on tool execution, Agent runtime, or Harness composition.
 - Optional provider-reported usage.
 - One asynchronous provider-neutral client contract.
 
+### Multimodal Embedding
+
+- An independent optional client; text Embedding remains text-only.
+- Each input contains non-empty ordered typed text, image, audio, or video
+  content, and a request contains a non-empty ordered batch of inputs.
+- Coarse input capabilities advertise individual modalities and media source
+  shapes. Adapters reject unsupported requests and return exactly one vector
+  per request input in the same order.
+- Existing immutable embedding vectors and optional provider-reported token
+  usage remain usable; Crystal does not inspect or transform media.
+
 ### Completion
 
 - Caller-authored text prompts.
@@ -67,6 +79,16 @@ depending on tool execution, Agent runtime, or Harness composition.
 - Ordered reasoning, tool-call, and tool-result protocol items.
 - Multiple candidates and open-ended finish reasons.
 - Non-streaming and optional typed streaming client contracts.
+
+### Structured final text
+
+- Caller-authored JSON Schema is an optional hard output requirement for
+  Completion and text or multimodal Chat.
+- Agent and Harness requests carry the same requirement unchanged to each model
+  turn. Crystal does not add formatting prompts or repair invalid model output.
+- The requirement governs a normal final text candidate, independently of tool
+  argument schemas. An adapter rejects an unsupported request or reports a
+  provider failure if the response violates the requirement.
 
 ### Media and multimodal Chat
 
@@ -152,6 +174,9 @@ depending on tool execution, Agent runtime, or Harness composition.
   result. Crystal supplies no built-in policy decision or model-visible text.
 - Opt-in timing and outcome observations without request, response, event, or
   exception payloads; the observer and its sink remain caller-owned.
+- Opt-in exception retry middleware with an explicit total-attempt bound and a
+  caller-owned decision after each failure. The same request object is replayed;
+  callers own cost, replay safety, and any repeated side effects.
 - Typed wrappers for Chat, Completion, Embedding, multimodal Chat, and immediate
   image, audio, and video generation. A wrapper exposes streaming only when its
   underlying client does.

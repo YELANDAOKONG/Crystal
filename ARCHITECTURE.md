@@ -40,8 +40,8 @@ No Crystal assembly depends on external implementations.
 ### Crystal
 
 Owns cross-capability primitives, Reasoning, Embeddings, Completions, text Chat,
-media sources and values, typed multimodal content and Chat, immediate image,
-audio, and video generation, and all model-facing text and multimodal tool
+media sources and values, typed multimodal content, Chat, and Embedding,
+immediate image, audio, and video generation, and all model-facing text and multimodal tool
 protocol values. Keeping protocol values in Crystal lets provider adapters
 represent complete traffic without depending on executable tool infrastructure.
 
@@ -76,11 +76,20 @@ start or terminal status, and elapsed time. Stream timing begins on enumeration
 and ends on completion, cancellation, failure, or early disposal. Observer
 callbacks are caller-owned and their exceptions propagate. Crystal provides no
 telemetry exporter or backend.
+PipelineRetries is opt-in asynchronous-operation middleware, not a default
+policy. It repeats the same request object and cancellation token only after a
+caller-supplied asynchronous decision on a non-cancellation exception. The
+positive maximum includes the first attempt. The decision may await a
+caller-owned delay; Crystal provides no retry classification or backoff.
+Cancellation is never retried, and observed cancellation cannot become a
+successful response. Repeated calls may repeat side effects and cost, so the
+caller must choose replay-safe operations. Streaming retries require separate
+partial-output semantics and are not included.
 
 ### Crystal.Decorators
 
 Owns typed adapters that apply generic middleware to provider-neutral Chat,
-Completion, Embedding, multimodal Chat, and immediate image, audio, and video
+Completion, Embedding, multimodal Chat and Embedding, and immediate image, audio, and video
 generation clients. It references Crystal and Crystal.Pipelines, without a
 dependency on executable Tools, Agents, or Harnesses. Wrapping preserves the
 client's declared capability object and optional streaming interface. Supplying
@@ -190,7 +199,10 @@ ensuring response count and order match the request it processed.
 ### Crystal.Completions
 
 Owns text prompts, ordered completion items, candidates, responses, typed stream
-events, ICompletionClient, and IStreamingCompletionClient.
+events, ICompletionClient, and IStreamingCompletionClient. An optional shared
+JsonOutputRequirement contains a caller-authored, cloned JSON Schema and is a
+hard constraint on normal final text output. Its root is an object or boolean;
+Crystal does not interpret its keywords or choose a schema dialect.
 
 A completion candidate contains ordered text and reasoning items. Keeping
 reasoning inside the ordered item sequence avoids losing provider output order.
@@ -208,6 +220,23 @@ reasoning are protocol items, not content modalities.
 
 Multimodal Chat uses a separate explicit capability contract under
 Crystal.Multimodal.Chat. IChatClient remains unchanged and text-only.
+Completion and both Chat request families accept the same optional hard JSON
+output requirement. It is independent of ToolDefinition.InputSchema and does
+not change message, tool, reasoning, or stream event shapes. Agents and
+Harnesses forward its exact value through every model turn. Crystal does not
+parse or repair provider output and never injects a formatting prompt.
+
+### Crystal.Multimodal.Embeddings
+
+Owns an independent optional multimodal Embedding family. Each input snapshots
+a non-empty ordered sequence of existing typed content blocks, and each request
+snapshots a non-empty ordered input batch. The response reuses immutable
+EmbeddingVector values. The adapter returns one vector per request input in
+the same order or rejects the unsupported request in full.
+Capabilities advertise only individual input modalities and media source
+shapes; role-free mixed-content combinations and cardinality remain adapter
+validation responsibilities. Text IEmbeddingClient remains unchanged. Crystal
+does not open or transform media during embedding.
 
 ### Crystal.Tools
 
@@ -392,6 +421,9 @@ content or reasoning-part index.
 A complete stream must be aggregatable into the same semantic response as the
 non-streaming operation. Opaque state may be buffered by an adapter and emitted
 as a completed state event.
+For a JSON output requirement, intermediate text deltas need not be valid JSON;
+the assembled normal final candidate must satisfy the same requirement as the
+non-streaming result.
 
 Text and multimodal Agent and Harness streams end with a typed completion event
 containing the same result returned by their non-streaming methods. Consumer

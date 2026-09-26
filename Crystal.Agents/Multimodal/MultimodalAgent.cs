@@ -128,7 +128,8 @@ public sealed class MultimodalAgent : IMultimodalAgent
             var chatRequest = new MultimodalChatRequest(
                 transcript,
                 _toolExecutor?.Definitions,
-                request.Reasoning);
+                request.Reasoning,
+                request.JsonOutput);
             modelCallCount = checked(modelCallCount + 1);
 
             yield return new MultimodalAgentModelRequestEvent(

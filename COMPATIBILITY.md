@@ -48,6 +48,34 @@ portable individual input and output shapes; they are not a conditional-rule or
 model-constraint language. Adapters validate model-specific combinations,
 cardinality, size, duration, and other constraints.
 
+## Structured final text requirement
+
+JsonOutputRequirement is a caller-authored JSON Schema and a hard output
+constraint on Completion and text or multimodal Chat. Its root is a JSON object
+or boolean; Crystal does not interpret its keywords or choose a dialect. For
+each normally completed candidate (FinishReason.Stop) without tool calls,
+concatenate its user-visible text in
+item and content order, excluding reasoning. CompletionText, assistant
+ChatMessage.Text, and TextContent in assistant multimodal messages are the
+respective text surfaces. The result must parse as one JSON value that conforms
+to the supplied schema; a normal final candidate cannot include non-text media.
+Intermediate stream deltas need not parse, but their assembled normal final
+candidate must meet the same rule. Tool-call or other nonterminal candidates
+are not rewritten into JSON; the requirement remains on subsequent Agent turns.
+
+An adapter must reject the request when it cannot support the schema or combine
+the requirement with requested tools or modalities. If a provider returns a
+normal final candidate that violates the accepted requirement, the adapter
+reports failure rather than silently returning it. Crystal does not validate,
+repair, or add a formatting prompt. ToolDefinition.InputSchema governs tool
+arguments separately and does not imply strict tool-call enforcement.
+
+The [OpenAI structured-output guide](https://developers.openai.com/api/docs/guides/structured-outputs),
+[Claude structured-output guide](https://platform.claude.com/docs/en/build-with-claude/structured-outputs),
+and [Gemini structured-output guide](https://ai.google.dev/gemini-api/docs/structured-output)
+show distinct final-output and tool-input controls, with model-dependent
+support. These are adapter mapping evidence, not provider fields in Crystal.
+
 ## Reasoning interoperability
 
 Current provider protocols expose materially different reasoning forms:
@@ -241,4 +269,16 @@ Embedding inputs and outputs are ordered. An adapter must return one vector per
 accepted input in the same order. It must not silently omit rejected inputs.
 Dimensions are reported by each vector and are not hard-coded by Crystal.
 
-Only text embeddings are in the current profile.
+IEmbeddingClient remains text-only. IMultimodalEmbeddingClient is an independent
+optional profile for ordered typed text, image, audio, and video input. Each
+embedding input retains its content-block order, and each request retains its
+input order. An adapter must return exactly one vector per request input in
+that same order; it must reject an unsupported modality, media source shape,
+combination, or cardinality rather than silently removing or rewriting blocks.
+Capabilities advertise individual accepted modalities and source shapes, not
+every combination. Media sources retain their existing ownership and expiration
+semantics. Crystal does not fetch, transcode, or inspect them. PDFs and generic
+attachments are outside this profile.
+TokenUsage is present only when provider-reported token accounting is
+semantically available for the complete request; media billing units are not
+silently converted into tokens.

@@ -12,11 +12,13 @@ public sealed record MultimodalAgentRunRequest
     /// <param name="items">The exact ordered initial transcript.</param>
     /// <param name="limits">The caller-configured optional run limits.</param>
     /// <param name="reasoning">Optional portable reasoning hints.</param>
+    /// <param name="jsonOutput">Optional hard final JSON output requirement.</param>
     public MultimodalAgentRunRequest(
         Guid runId,
         IEnumerable<MultimodalChatItem> items,
         MultimodalAgentRunLimits limits,
-        ReasoningOptions? reasoning = null)
+        ReasoningOptions? reasoning = null,
+        JsonOutputRequirement? jsonOutput = null)
     {
         if (runId == Guid.Empty)
         {
@@ -31,6 +33,7 @@ public sealed record MultimodalAgentRunRequest
         Items = CollectionSnapshot.Create(items, nameof(items));
         Limits = limits;
         Reasoning = reasoning;
+        JsonOutput = jsonOutput;
     }
 
     /// <summary>Gets the caller-supplied run identifier.</summary>
@@ -47,4 +50,7 @@ public sealed record MultimodalAgentRunRequest
 
     /// <summary>Gets optional portable reasoning hints.</summary>
     public ReasoningOptions? Reasoning { get; }
+
+    /// <summary>Gets the optional hard final JSON output requirement.</summary>
+    public JsonOutputRequirement? JsonOutput { get; }
 }
