@@ -35,7 +35,7 @@
 - Crystal.Harness references Crystal and Crystal.Agents.
 - Crystal.Pipelines has no project references and remains usable for any typed
   asynchronous request/response or event stream.
-- Crystal.ClientPipelines references only Crystal and Crystal.Pipelines. It
+- Crystal.Decorators references only Crystal and Crystal.Pipelines. It
   preserves each wrapped client's optional streaming interface and capability
   profile; unsupported streaming middleware is rejected.
 - Production project references are one-way and contain no cycle.
@@ -203,6 +203,9 @@ Tests must prove:
   exceptions on their own.
 - Any model-bound content emitted by middleware is caller-authored content and
   remains subject to protocol provenance requirements.
+- Caller policies use the ordinary middleware delegates. A policy may forward,
+  reject, or return exact caller-owned output; Crystal has no implicit
+  exception-to-content disclosure or separate policy abstraction.
 - Built-in observations contain no request, response, event, exception, or
   operation argument. Operation names are caller-supplied stable identifiers
   without sensitive content. Stream observations cover enumeration through

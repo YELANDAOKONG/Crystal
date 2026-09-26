@@ -51,6 +51,9 @@ baseline. Design documents and code must change together.
   remain application responsibilities.
 - 2026-09-27: The user authorized an xUnit test project and additional class
   library projects. Crystal.Pipelines begins generic middleware composition.
+- 2026-09-27: Crystal.Decorators is the opt-in client wrapper assembly. Caller
+  policies use ordinary generic middleware delegates; no parallel policy
+  abstraction is required.
 
 ## Phase 0 — Product and architecture reset
 
@@ -185,14 +188,15 @@ Deferred Phase 6 lifecycles:
 3. resumable long-running operation handles, polling, persistence, and explicit
    remote cancellation semantics;
 4. stateful realtime audio and video sessions; and
-5. automated protocol and runtime tests under the now-authorized xUnit project.
+5. broader automated protocol and runtime tests under the now-authorized xUnit
+   project; media-source ownership tests are implemented.
 
 No Phase 6 production type may be a placeholder media abstraction, generic
 option bag, provider resource handle, or universal edit mode.
 
 ## Phase 7 — General operation composition
 
-Status: in progress.
+Status: complete.
 
 Deliverables:
 
@@ -201,12 +205,13 @@ Deliverables:
 3. tests for ordering, cancellation, failures, and construction invariants;
 4. explicit adapters from existing client families where they add value without
    changing the model-facing protocol; and
-5. opt-in content-free diagnostics, followed by caller-configured policy
-   middleware with safe default disclosure.
+5. opt-in content-free diagnostics and caller-configured policies through the
+   same generic middleware delegates, with no implicit exception disclosure.
 
-Current progress: operation and streaming middleware, content-free timing and
-outcome diagnostics, typed adapters for all current client families, and their
-behavioral tests are implemented. General policy middleware remains open.
+Operation and streaming middleware, content-free timing and outcome diagnostics,
+typed adapters for all current client families, and behavioral tests are
+implemented. Caller policies can forward, reject, or return exact caller-owned
+output without a provider dependency or Crystal-authored model text.
 
 Exit criteria: callers can compose cross-cutting behavior around supported
 operations without a provider dependency or Crystal-authored model text.

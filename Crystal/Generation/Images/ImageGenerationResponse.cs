@@ -16,7 +16,7 @@ public sealed record ImageGenerationResponse
         Usage = usage;
     }
 
-    /// <summary>Gets the non-empty ordered candidates.</summary>
+    /// <summary>Gets the ordered candidates, which may be empty.</summary>
     public IReadOnlyList<GenerationCandidate> Candidates { get; }
 
     /// <summary>Gets provider-reported token usage when available.</summary>

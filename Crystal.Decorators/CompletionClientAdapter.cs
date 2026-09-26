@@ -1,7 +1,7 @@
 using Crystal.Completions;
 using Crystal.Pipelines;
 
-namespace Crystal.ClientPipelines;
+namespace Crystal.Decorators;
 
 internal sealed class CompletionClientAdapter : ICompletionClient
 {

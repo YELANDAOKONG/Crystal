@@ -77,4 +77,40 @@ public sealed class StreamingPipelineTests
             }
         });
     }
+
+    [Fact]
+    public async Task CallerPolicyMayStopBeforeStartingTheSource()
+    {
+        var denial = new InvalidOperationException("Caller policy denied the stream.");
+        var sourceStarted = false;
+
+        async IAsyncEnumerable<int> Source(
+            string request,
+            [EnumeratorCancellation] CancellationToken token)
+        {
+            sourceStarted = true;
+            yield return 1;
+            await Task.Yield();
+        }
+
+        async IAsyncEnumerable<int> Deny()
+        {
+            await Task.FromException(denial).ConfigureAwait(false);
+            yield return 0;
+        }
+
+        StreamingMiddleware<string, int> policy = _ => (_, _) => Deny();
+        var pipeline = new StreamingPipeline<string, int>(Source, [policy]);
+
+        var observed = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await foreach (var item in pipeline.StreamAsync("request"))
+            {
+                Assert.Fail($"Unexpected event: {item}");
+            }
+        });
+
+        Assert.Same(denial, observed);
+        Assert.False(sourceStarted);
+    }
 }

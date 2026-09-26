@@ -1,7 +1,7 @@
 using Crystal.Multimodal.Chat;
 using Crystal.Pipelines;
 
-namespace Crystal.ClientPipelines;
+namespace Crystal.Decorators;
 
 internal sealed class StreamingMultimodalChatClientAdapter : IStreamingMultimodalChatClient
 {

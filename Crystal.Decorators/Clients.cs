@@ -7,10 +7,10 @@ using Crystal.Generation.Video;
 using Crystal.Multimodal.Chat;
 using Crystal.Pipelines;
 
-namespace Crystal.ClientPipelines;
+namespace Crystal.Decorators;
 
 /// <summary>Composes caller-owned middleware around provider-neutral clients.</summary>
-public static class ClientPipelineFactory
+public static class Clients
 {
     /// <summary>Wraps text Chat while preserving optional streaming support.</summary>
     /// <param name="client">The configured text Chat client.</param>

@@ -10,7 +10,7 @@ names may change while the design documents and implementation change together.
 
 Crystal currently ships six production assemblies. Four form a one-way
 runtime dependency chain; Crystal.Pipelines is independent and
-Crystal.ClientPipelines depends only on the protocol and generic pipeline layers:
+Crystal.Decorators depends only on the protocol and generic pipeline layers:
 
 ~~~text
 Crystal.Harness
@@ -23,7 +23,7 @@ Crystal
 
 Crystal.Pipelines (no project references)
 
-Crystal.ClientPipelines → Crystal + Crystal.Pipelines
+Crystal.Decorators → Crystal + Crystal.Pipelines
 ~~~
 
 Crystal.Agents also references Crystal directly. Crystal.Harness also references
@@ -68,13 +68,16 @@ It has no project references and does not know model, Agent, or provider types.
 Middleware is supplied by the caller and runs in declared order, wrapping the
 terminal operation. The pipeline snapshots middleware at construction. It does
 not create messages, intercept hidden global state, or persist results.
+The same middleware delegates express caller policies: they may forward the
+operation, reject it, or return an exact caller-owned result. Crystal defines
+no separate policy framework or default exception-to-content mapping.
 Optional diagnostics report only a caller-supplied stable operation name, a
 start or terminal status, and elapsed time. Stream timing begins on enumeration
 and ends on completion, cancellation, failure, or early disposal. Observer
 callbacks are caller-owned and their exceptions propagate. Crystal provides no
 telemetry exporter or backend.
 
-### Crystal.ClientPipelines
+### Crystal.Decorators
 
 Owns typed adapters that apply generic middleware to provider-neutral Chat,
 Completion, Embedding, multimodal Chat, and immediate image, audio, and video
@@ -83,7 +86,8 @@ dependency on executable Tools, Agents, or Harnesses. Wrapping preserves the
 client's declared capability object and optional streaming interface. Supplying
 stream middleware to a client without streaming support fails at construction.
 The adapters forward exact requests, responses, events, and cancellation tokens
-unless caller-supplied middleware explicitly changes them.
+unless caller-supplied middleware explicitly changes them. The public `Clients`
+entry point selects the wrapper for each client family.
 
 Namespaces continue to express domain ownership. The Crystal.Tools namespace is
 intentionally present in both Crystal and Crystal.Tools because its protocol

@@ -1,7 +1,7 @@
 using Crystal.Embeddings;
 using Crystal.Pipelines;
 
-namespace Crystal.ClientPipelines;
+namespace Crystal.Decorators;
 
 internal sealed class EmbeddingClientAdapter : IEmbeddingClient
 {

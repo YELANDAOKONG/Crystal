@@ -36,9 +36,9 @@ library's public API.
 - Crystal.Pipelines adds type-safe, caller-owned asynchronous operation and
   streaming middleware composition without depending on a particular model,
   tool, or provider contract.
-- Crystal.ClientPipelines adapts current provider-neutral client families to
-  those pipelines while preserving their supported interfaces and capability
-  profiles.
+- Crystal.Decorators wraps current provider-neutral client families with
+  caller-owned middleware while preserving their supported interfaces and
+  capability profiles.
 
 Consumers reference only the layers required by their use case. A provider
 adapter can implement text, multimodal, or generation capabilities without
@@ -143,6 +143,8 @@ depending on tool execution, Agent runtime, or Harness composition.
 - Independent ordered middleware composition for asynchronous event streams.
 - Exact request, response, event, exception, and cancellation behavior unless
   caller-owned middleware explicitly changes it.
+- Caller-owned middleware can forward, reject, or return an exact caller-owned
+  result. Crystal supplies no built-in policy decision or model-visible text.
 - Opt-in timing and outcome observations without request, response, event, or
   exception payloads; the observer and its sink remain caller-owned.
 - Typed wrappers for Chat, Completion, Embedding, multimodal Chat, and immediate

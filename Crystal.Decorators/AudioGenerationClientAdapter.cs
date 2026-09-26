@@ -2,7 +2,7 @@ using Crystal.Generation;
 using Crystal.Generation.Audio;
 using Crystal.Pipelines;
 
-namespace Crystal.ClientPipelines;
+namespace Crystal.Decorators;
 
 internal sealed class AudioGenerationClientAdapter : IAudioGenerationClient
 {

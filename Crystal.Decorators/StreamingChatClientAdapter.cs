@@ -1,7 +1,7 @@
 using Crystal.Chat;
 using Crystal.Pipelines;
 
-namespace Crystal.ClientPipelines;
+namespace Crystal.Decorators;
 
 internal sealed class StreamingChatClientAdapter : IStreamingChatClient
 {

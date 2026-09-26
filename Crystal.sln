@@ -12,7 +12,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crystal.Pipelines", "Crysta
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crystal.Tests", "Crystal.Tests\Crystal.Tests.csproj", "{E8E2EAF7-8827-4434-9297-33CA084DFEB3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crystal.ClientPipelines", "Crystal.ClientPipelines\Crystal.ClientPipelines.csproj", "{85AFFFDD-FBAF-4338-9420-A47F6467C3C1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crystal.Decorators", "Crystal.Decorators\Crystal.Decorators.csproj", "{85AFFFDD-FBAF-4338-9420-A47F6467C3C1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

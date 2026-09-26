@@ -64,6 +64,40 @@ public sealed class AsyncPipelineTests
     }
 
     [Fact]
+    public async Task CallerPolicyMayStopWithoutProducingAResponse()
+    {
+        var denial = new InvalidOperationException("Caller policy denied the operation.");
+        var terminalCalled = false;
+        AsyncMiddleware<string, string> policy = _ => (_, _) =>
+            Task.FromException<string>(denial);
+        var pipeline = new AsyncPipeline<string, string>(
+            (_, _) =>
+            {
+                terminalCalled = true;
+                return Task.FromResult("terminal response");
+            },
+            [policy]);
+
+        var observed = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => pipeline.InvokeAsync("caller request"));
+
+        Assert.Same(denial, observed);
+        Assert.False(terminalCalled);
+    }
+
+    [Fact]
+    public async Task CallerPolicyMayReturnItsExactResponse()
+    {
+        var response = new object();
+        AsyncMiddleware<object, object> policy = _ => (_, _) => Task.FromResult(response);
+        var pipeline = new AsyncPipeline<object, object>(
+            (_, _) => throw new InvalidOperationException("Terminal must not run."),
+            [policy]);
+
+        Assert.Same(response, await pipeline.InvokeAsync(new object()));
+    }
+
+    [Fact]
     public void ConstructionRejectsNullMiddlewareEntry()
     {
         AsyncMiddleware<string, string>[] middleware = [null!];

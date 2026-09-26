@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 using Crystal;
 using Crystal.Chat;
-using Crystal.ClientPipelines;
+using Crystal.Decorators;
 using Crystal.Generation;
 using Crystal.Generation.Images;
 using Crystal.Media;
@@ -12,7 +12,7 @@ using Crystal.Pipelines;
 
 namespace Crystal.Tests;
 
-public sealed class ClientPipelineFactoryTests
+public sealed class ClientsTests
 {
     [Fact]
     public async Task ChatWrapperPreservesStreamingAndExactProtocolValues()
@@ -43,7 +43,7 @@ public sealed class ClientPipelineFactoryTests
             }
         }
 
-        var wrapped = ClientPipelineFactory.ForChat(
+        var wrapped = Clients.ForChat(
             source,
             [completeMiddleware],
             [streamMiddleware]);
@@ -76,11 +76,11 @@ public sealed class ClientPipelineFactoryTests
         StreamingMiddleware<ChatRequest, ChatStreamEvent> middleware = next => next;
 
         var failure = Assert.Throws<ArgumentException>(() =>
-            ClientPipelineFactory.ForChat(client, [], [middleware]));
+            Clients.ForChat(client, [], [middleware]));
 
         Assert.Equal("streamingMiddleware", failure.ParamName);
         Assert.IsNotAssignableFrom<IStreamingChatClient>(
-            ClientPipelineFactory.ForChat(client, []));
+            Clients.ForChat(client, []));
     }
 
     [Fact]
@@ -94,7 +94,7 @@ public sealed class ClientPipelineFactoryTests
         var chatResponse = new MultimodalChatResponse(
             [new MultimodalChatCandidate([], FinishReason.Stop)]);
         var chatSource = new RecordingMultimodalChatClient(chatCapabilities, chatResponse);
-        var chat = ClientPipelineFactory.ForMultimodalChat(chatSource, []);
+        var chat = Clients.ForMultimodalChat(chatSource, []);
         var chatRequest = new MultimodalChatRequest([]);
 
         Assert.Same(chatCapabilities, chat.Capabilities);
@@ -106,7 +106,7 @@ public sealed class ClientPipelineFactoryTests
         var imageSource = new RecordingImageGenerationClient(
             imageCapabilities,
             imageResponse);
-        var generator = ClientPipelineFactory.ForImageGeneration(imageSource, []);
+        var generator = Clients.ForImageGeneration(imageSource, []);
         var generationRequest = new ImageGenerationRequest([]);
 
         Assert.Same(imageCapabilities, generator.Capabilities);
@@ -126,7 +126,7 @@ public sealed class ClientPipelineFactoryTests
             capabilities,
             response,
             streamEvent);
-        var wrapped = ClientPipelineFactory.ForMultimodalChat(source, []);
+        var wrapped = Clients.ForMultimodalChat(source, []);
         var streaming = Assert.IsAssignableFrom<IStreamingMultimodalChatClient>(wrapped);
         var request = new MultimodalChatRequest([]);
 
