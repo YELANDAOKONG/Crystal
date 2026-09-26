@@ -230,10 +230,12 @@ usage. If a model call times out or any completed response omits usage, the run
 usage is null. When every response reports usage but any response omits a
 reasoning-token count, only the aggregated reasoning-token count is null.
 
-Agent uses non-streaming IChatClient responses for model turns. Its own
-IAsyncEnumerable event stream observes turn boundaries and exact protocol
-objects. Direct provider streaming remains available through
-IStreamingChatClient.
+Agent consumes IStreamingChatClient when the configured client supports it,
+forwards each exact ChatStreamEvent, and assembles a complete ChatResponse
+before candidate selection and tool execution. Other clients use non-streaming
+IChatClient responses. Invalid or incomplete streams fail without appending
+partial model content to the transcript. Both paths preserve the same Agent
+limits, tool ordering, and usage rules.
 
 The independent Crystal.Multimodal.Agents family applies the same explicit loop
 to IMultimodalChatClient and IMultimodalToolExecutor. Its request, limits,

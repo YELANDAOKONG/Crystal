@@ -97,7 +97,7 @@ Model-bound text must be traceable to caller input, selected model output, or
 caller-owned tool or policy output. Model-bound media must be exact caller input,
 selected model output, or caller-owned multimodal tool or policy output.
 
-Tests, once authorized, must prove:
+Tests must prove:
 
 - the first Agent model request contains exactly caller items;
 - later requests add only selected model items and correlated tool results;
@@ -109,6 +109,8 @@ Tests, once authorized, must prove:
 - no error, retry, limit, selection, approval, or context behavior injects a
   message;
 - event objects expose every configured transition; and
+- streamed Agent events preserve each exact client event and assemble complete
+  candidates before selection or tool execution; and
 - an absent tool executor exposes no definitions.
 
 ## Error semantics
@@ -166,6 +168,9 @@ Tests, once authorized, must prove:
 - Model and tool attempts consume limits even when they fail or time out.
 - Agent usage is null unless every attempted model call reports usage.
 - Context overflow is surfaced; Crystal does not truncate or summarize.
+- A text Agent prefers IStreamingChatClient when available, forwards exact
+  stream events, and assembles the complete response before candidate selection.
+  Invalid or incomplete streams fail without synthesized model content.
 - Multimodal Agent replay preserves media values and relies on caller-maintained
   URI and replayable-stream validity for the complete run.
 - A multimodal Agent prefers IStreamingMultimodalChatClient when available,

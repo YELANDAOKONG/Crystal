@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../Crystal.Agents/Crystal.Agents.csproj" />
     <ProjectReference Include="../Crystal.Pipelines/Crystal.Pipelines.csproj" />
   </ItemGroup>
 

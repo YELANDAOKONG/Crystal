@@ -115,6 +115,9 @@ depending on tool execution, Agent runtime, or Harness composition.
 - Typed events containing exact model requests, responses, and tool results.
 - Exact transcript preservation and explicit stop reasons.
 - Aggregated usage only when every attempted model call reports usage.
+- Text Agents consume typed Chat streams when the configured client supports
+  them, forward exact stream events, and assemble a complete response before
+  candidate selection and tool execution.
 - A separate multimodal Agent family that replays media values exactly and does
   not fetch, transcode, or cache them.
 - Multimodal Agents consume provider streams when available, forward exact

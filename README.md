@@ -19,6 +19,7 @@ text interfaces remain unchanged and text-only.
 - Immutable public data contracts.
 - Caller-owned ordered middleware for typed operations and event streams.
 - Caller-owned conversation storage and reconstruction across invocations.
+- Exact text Agent forwarding of provider Chat stream events when available.
 
 ## Project status
 

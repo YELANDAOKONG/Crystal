@@ -208,11 +208,12 @@ operations without a provider dependency or Crystal-authored model text.
 
 ## Phase 8 — Portable model and tool semantics
 
-Status: planned.
+Status: in progress; text Agent stream consumption is implemented.
 
-Evaluate structured output, richer embedding inputs, tool schema binding, and
-text Agent consumption of client streams against multiple distinct provider
-shapes. Add only semantics that can be specified without a provider identifier,
+Evaluate structured output, richer embedding inputs, and tool schema binding
+against multiple distinct provider shapes. Text Agent stream consumption
+forwards exact events and assembles the complete response before selection.
+Add only semantics that can be specified without a provider identifier,
 wire DTO, or generic option bag. Each addition needs lossless ordering rules,
 unsupported-feature behavior, and stream/non-stream equivalence tests.
 

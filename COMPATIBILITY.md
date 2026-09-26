@@ -137,6 +137,12 @@ provider mode whose readable output can be represented by text Chat items or
 reject an unsupported media response. Binary data must never be smuggled through
 text or opaque reasoning state.
 
+IStreamingChatClient adds optional typed text streaming. A text Agent consumes
+that stream when available, forwards each exact event, and assembles complete
+candidates before selection. Candidate, item, and reasoning text-segment
+indexes must remain stable and contiguous so the stream can be assembled
+without inferred content.
+
 IMultimodalChatClient is a separate profile. It can preserve readable text,
 image, audio, and video reasoning content plus opaque continuation state.
 IStreamingMultimodalChatClient adds optional typed streaming without changing

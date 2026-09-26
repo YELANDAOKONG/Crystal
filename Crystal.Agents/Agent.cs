@@ -13,6 +13,7 @@ public sealed class Agent : IAgent
 {
     private readonly ChatCandidateSelector _candidateSelector;
     private readonly IChatClient _client;
+    private readonly IStreamingChatClient? _streamingClient;
     private readonly IToolExecutor? _toolExecutor;
 
     /// <summary>
@@ -36,6 +37,7 @@ public sealed class Agent : IAgent
             nameof(candidateSelector));
 
         _client = client;
+        _streamingClient = client as IStreamingChatClient;
         _candidateSelector = candidateSelector;
         _toolExecutor = toolExecutor;
     }
@@ -131,34 +133,106 @@ public sealed class Agent : IAgent
                 modelCallCount,
                 chatRequest);
 
-            var modelOperation = await ExecuteOperationAsync(
-                    token => _client.CompleteAsync(chatRequest, token),
-                    cancellationToken,
-                    durationSource.Token,
-                    operationSource.Token)
-                .ConfigureAwait(false);
-
-            if (modelOperation.TimedOut)
+            ChatResponse response;
+            if (_streamingClient is null)
             {
-                usage.Add(null);
-                var durationResult = CreateResult(
-                    request,
-                    transcript,
-                    AgentRunStopReason.DurationLimitReached,
-                    modelCallCount,
-                    toolCallCount,
-                    usage);
+                var modelOperation = await ExecuteOperationAsync(
+                        token => _client.CompleteAsync(chatRequest, token),
+                        cancellationToken,
+                        durationSource.Token,
+                        operationSource.Token)
+                    .ConfigureAwait(false);
 
-                yield return new AgentRunCompletedEvent(
-                    request.RunId,
-                    sequence,
-                    durationResult);
-                yield break;
+                if (modelOperation.TimedOut)
+                {
+                    usage.Add(null);
+                    yield return new AgentRunCompletedEvent(
+                        request.RunId,
+                        sequence,
+                        CreateResult(
+                            request,
+                            transcript,
+                            AgentRunStopReason.DurationLimitReached,
+                            modelCallCount,
+                            toolCallCount,
+                            usage));
+                    yield break;
+                }
+
+                response = modelOperation.Value
+                    ?? throw new InvalidOperationException(
+                        "The chat client returned no response.");
+            }
+            else
+            {
+                var assembler = new ChatStreamAssembler();
+                var timedOut = false;
+                var enumerator = _streamingClient
+                    .StreamAsync(chatRequest, operationSource.Token)
+                    .GetAsyncEnumerator(operationSource.Token);
+
+                try
+                {
+                    while (true)
+                    {
+                        var moveOperation = await ExecuteMoveNextAsync(
+                                enumerator,
+                                cancellationToken,
+                                durationSource.Token)
+                            .ConfigureAwait(false);
+
+                        if (moveOperation.TimedOut)
+                        {
+                            timedOut = true;
+                            break;
+                        }
+
+                        if (!moveOperation.Value)
+                        {
+                            break;
+                        }
+
+                        var streamEvent = enumerator.Current
+                            ?? throw new InvalidOperationException(
+                                "The Chat client streamed no event value.");
+                        assembler.Apply(streamEvent);
+
+                        yield return new AgentModelStreamEvent(
+                            request.RunId,
+                            sequence++,
+                            modelCallCount,
+                            streamEvent);
+                    }
+                }
+                finally
+                {
+                    var disposeOperation = await ExecuteDisposeAsync(
+                            enumerator,
+                            cancellationToken,
+                            durationSource.Token)
+                        .ConfigureAwait(false);
+                    timedOut |= disposeOperation.TimedOut;
+                }
+
+                if (timedOut)
+                {
+                    usage.Add(null);
+                    yield return new AgentRunCompletedEvent(
+                        request.RunId,
+                        sequence,
+                        CreateResult(
+                            request,
+                            transcript,
+                            AgentRunStopReason.DurationLimitReached,
+                            modelCallCount,
+                            toolCallCount,
+                            usage));
+                    yield break;
+                }
+
+                response = assembler.ToResponse();
             }
 
-            var response = modelOperation.Value
-                ?? throw new InvalidOperationException(
-                    "The chat client returned no response.");
             usage.Add(response.Usage);
 
             yield return new AgentModelResponseEvent(
@@ -337,6 +411,42 @@ public sealed class Agent : IAgent
                 && durationToken.IsCancellationRequested)
         {
             return AgentOperationResult<T>.Timeout();
+        }
+    }
+
+    private static async Task<AgentOperationResult<bool>> ExecuteMoveNextAsync(
+        IAsyncEnumerator<ChatStreamEvent> enumerator,
+        CancellationToken callerToken,
+        CancellationToken durationToken)
+    {
+        try
+        {
+            var hasNext = await enumerator.MoveNextAsync().ConfigureAwait(false);
+            return AgentOperationResult<bool>.Success(hasNext);
+        }
+        catch (OperationCanceledException)
+            when (!callerToken.IsCancellationRequested
+                && durationToken.IsCancellationRequested)
+        {
+            return AgentOperationResult<bool>.Timeout();
+        }
+    }
+
+    private static async Task<AgentOperationResult<bool>> ExecuteDisposeAsync(
+        IAsyncEnumerator<ChatStreamEvent> enumerator,
+        CancellationToken callerToken,
+        CancellationToken durationToken)
+    {
+        try
+        {
+            await enumerator.DisposeAsync().ConfigureAwait(false);
+            return AgentOperationResult<bool>.Success(true);
+        }
+        catch (OperationCanceledException)
+            when (!callerToken.IsCancellationRequested
+                && durationToken.IsCancellationRequested)
+        {
+            return AgentOperationResult<bool>.Timeout();
         }
     }
 

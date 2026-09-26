@@ -26,6 +26,8 @@ change. Implementation must never become the only source of truth.
   audio, and video generation clients.
 - Text and multimodal client, Tool, Agent, and Harness contracts are independent.
   Existing text interfaces remain usable without accepting or returning media.
+- Text and multimodal Agents consume optional typed Chat streams when configured
+  clients provide them, forwarding exact events before selecting a candidate.
 - The current release line contains no generic attachment or file-content bag,
   PDF contract, batch generation, generated-media streaming, resumable generation
   operation, or realtime media session.
