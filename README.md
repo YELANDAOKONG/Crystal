@@ -96,6 +96,11 @@ stream middleware to a non-streaming client is rejected during construction.
 The same middleware delegates can express caller-owned policies: forward the
 operation, reject it, or return an exact caller-owned result.
 
+`EmbeddingValidation.RequireTextCardinality()` and
+`EmbeddingValidation.RequireMultimodalCardinality()` are optional middleware
+that reject a response with a vector count different from its request input
+count. Adapters still own the correspondence and order of returned vectors.
+
 ## Using Crystal
 
 Crystal does not connect to a model provider by itself. An external adapter

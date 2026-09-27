@@ -43,6 +43,8 @@ change. Implementation must never become the only source of truth.
   after each failure and a finite attempt bound; there is no default retry.
 - Crystal.Decorators applies those pipelines to current client contracts
   without widening their portable capability or streaming support.
+- Optional EmbeddingValidation middleware checks text or multimodal embedding
+  response cardinality against the request at the point where it is composed.
 - Session storage and recovery across process lifetimes belong to callers.
   Crystal does not own a durable session store or checkpoint restoration.
 - Future media lifecycles must remain additive and explicit. Do not add

@@ -98,6 +98,12 @@ The adapters forward exact requests, responses, events, and cancellation tokens
 unless caller-supplied middleware explicitly changes them. The public `Clients`
 entry point selects the wrapper for each client family.
 
+EmbeddingValidation provides opt-in middleware for the existing one-vector-per-input
+contract in both text and multimodal Embedding. It compares the response
+with the request received at its position in the middleware chain, returns a
+valid response unchanged, and throws a content-free error for a missing response
+or mismatched count. It performs no provider inference or vector transformation.
+
 Namespaces continue to express domain ownership. The Crystal.Tools namespace is
 intentionally present in both Crystal and Crystal.Tools because its protocol
 values belong at the adapter boundary while its executable infrastructure is an

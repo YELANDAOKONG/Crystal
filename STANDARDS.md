@@ -100,6 +100,8 @@
 - A caller-authored JsonOutputRequirement is a hard final-text constraint,
   separate from tool input schemas. Snapshot its schema, forward it unchanged
   through Agent and Harness, and reject unsupported adapter combinations.
+- JSON Schema values in output requirements and tool definitions have an object
+  or boolean root. Crystal copies but does not interpret their keywords.
 - Public APIs require XML documentation before a preview package.
 
 ## Protocol provenance
@@ -251,6 +253,9 @@ Tests must prove:
   operation argument. Operation names are caller-supplied stable identifiers
   without sensitive content. Stream observations cover enumeration through
   disposal, including early abandonment.
+- Opt-in embedding cardinality middleware compares the response with the
+  request at its middleware position and does not change valid vectors, order,
+  usage, or cancellation tokens.
 
 ## Dependency decision
 

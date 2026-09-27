@@ -68,7 +68,9 @@ the requirement with requested tools or modalities. If a provider returns a
 normal final candidate that violates the accepted requirement, the adapter
 reports failure rather than silently returning it. Crystal does not validate,
 repair, or add a formatting prompt. ToolDefinition.InputSchema governs tool
-arguments separately and does not imply strict tool-call enforcement.
+arguments separately and does not imply strict tool-call enforcement. It also
+accepts an object or boolean JSON Schema root; Crystal preserves it without
+interpreting keywords or parsing model-generated argument text.
 
 The [OpenAI structured-output guide](https://developers.openai.com/api/docs/guides/structured-outputs),
 [Claude structured-output guide](https://platform.claude.com/docs/en/build-with-claude/structured-outputs),
@@ -275,6 +277,11 @@ embedding input retains its content-block order, and each request retains its
 input order. An adapter must return exactly one vector per request input in
 that same order; it must reject an unsupported modality, media source shape,
 combination, or cardinality rather than silently removing or rewriting blocks.
+
+Consumers may opt into EmbeddingValidation middleware to reject a wrong vector
+count at their client boundary; an adapter remains responsible for correct
+vector-to-input correspondence and order.
+
 Capabilities advertise individual accepted modalities and source shapes, not
 every combination. Media sources retain their existing ownership and expiration
 semantics. Crystal does not fetch, transcode, or inspect them. PDFs and generic

@@ -177,9 +177,11 @@ depending on tool execution, Agent runtime, or Harness composition.
 - Opt-in exception retry middleware with an explicit total-attempt bound and a
   caller-owned decision after each failure. The same request object is replayed;
   callers own cost, replay safety, and any repeated side effects.
-- Typed wrappers for Chat, Completion, Embedding, multimodal Chat, and immediate
-  image, audio, and video generation. A wrapper exposes streaming only when its
-  underlying client does.
+- Typed wrappers for Chat, Completion, text and multimodal Embedding,
+  multimodal Chat, and immediate image, audio, and video generation. A wrapper
+  exposes streaming only when its underlying client does.
+- Opt-in text and multimodal Embedding cardinality checks reject an adapter
+  response that lacks exactly one vector for each input.
 
 ## Meaning of neutral
 

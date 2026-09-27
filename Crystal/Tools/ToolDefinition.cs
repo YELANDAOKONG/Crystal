@@ -22,10 +22,11 @@ public sealed record ToolDefinition
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
-        if (inputSchema.ValueKind == JsonValueKind.Undefined)
+        if (inputSchema.ValueKind is not (JsonValueKind.Object
+            or JsonValueKind.True or JsonValueKind.False))
         {
             throw new ArgumentException(
-                "Input schema must contain a JSON value.",
+                "Input schema must be a JSON object or boolean.",
                 nameof(inputSchema));
         }
 
