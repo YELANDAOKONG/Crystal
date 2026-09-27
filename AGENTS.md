@@ -54,6 +54,14 @@ change. Implementation must never become the only source of truth.
   response cardinality against the request at the point where it is composed.
 - Multimodal embedding may opt into validation of individually advertised input
   modalities and media source kinds without inspecting or opening media.
+- Generated-media streams may opt into validation of revision and chunk order,
+  and of one final completion event, without assembling or storing media.
+- Generation batches may opt into completed-response cardinality validation;
+  the caller supplies the original request count when polling.
+- Realtime output streams may opt into validation of per-output content order
+  and completion boundaries without managing the live connection.
+- Realtime session opening may opt into validation of individually declared
+  output modalities, turn mode, tools, and reasoning support.
 - Session storage and recovery across process lifetimes belong to callers.
   Crystal does not own a durable session store, operation-ticket store, or
   checkpoint restoration. Realtime sessions are live connection boundaries and

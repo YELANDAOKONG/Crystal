@@ -178,16 +178,28 @@ Tests must prove:
   has one terminal item per request in input order; one item failure does not
   cause Crystal to discard other results. A batch adapter never silently
   decomposes submission into repeated immediate calls.
+- Optional batch validation compares completed response cardinality to the
+  original request count. Poll validation takes that count from the caller and
+  does not retain a ticket or submission state.
 - Generated-media stream events distinguish complete provisional previews from
   encoded byte chunks. Chunk data is copied. Revisions and zero-based indexes
   preserve ordering; a final chunk completes only its provisional revision.
   Exactly one completed event ends a successful stream with the authoritative
   target-specific response. Error and cancellation do not synthesize success.
+- Opt-in stream validation may track revision and chunk metadata for the active
+  enumeration. It forwards accepted event objects unchanged, emits the single
+  completion only after the source ends, and never assembles or stores media.
 - A realtime session has one receive enumeration and caller-serialized sends,
   which may overlap. Every input segment is complete typed content; output
   segments retain stable output IDs and zero-based indexes. Tool calls and
   results retain their exact correlation IDs. Crystal neither reconnects nor
   stores the session transcript.
+- Opt-in realtime output validation retains only per-output indexes and closed
+  IDs for one enumeration. It forwards exact events and never manages a
+  connection or changes output content.
+- Opt-in session-open preflight checks only the configured realtime client's
+  declared individual settings. It forwards valid requests unchanged and does
+  not replace adapter checks of input, context, or conditional model limits.
 - Generated output preserves item and candidate order. Embedded video audio and a
   separate generated audio item are not interchangeable.
 - Do not add a generic attachment, provider-option, billing-usage, or metadata

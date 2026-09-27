@@ -549,12 +549,30 @@ When complete, the batch response has one terminal item at each input index,
 including failed or canceled items. Crystal does not split a batch into
 individual calls.
 
+`GenerationBatchValidation.RequireSubmittedCardinality<TRequest, TResponse>()`
+can check an immediately completed submission in an `AsyncPipeline`. For a
+completed poll, `RequirePolledCardinality<TResponse>(submittedCount)` checks
+against the original count retained by the caller. Pending snapshots pass
+through unchanged; Crystal stores no tickets or counts between calls.
+
 Optional `IStreamingImageGenerationClient`,
 `IStreamingAudioGenerationClient`, and `IStreamingVideoGenerationClient`
 deliver complete provisional previews or copied encoded chunks with explicit
 candidate, item, and revision indexes. A successful stream ends with one event
 containing the authoritative complete response. Preview revisions can change;
 the final response decides the result.
+
+`GenerationStreamValidation.RequireProtocol<TRequest, TResponse>()` can be
+added to a `StreamingPipeline` to reject out-of-order or incomplete provisional
+media and missing or repeated completion. It forwards valid events unchanged
+and does not assemble bytes into the final response.
+
+`RealtimeOutputValidation.ValidateAsync(session.ReceiveAsync(token), token)`
+optionally checks each live output's segment order and completion boundary. It
+forwards the same events and does not reconnect or store the session.
+`RealtimeSessionValidation.RequireDeclaredCapabilities(client.Capabilities)`
+can preflight individually advertised session settings in an `AsyncPipeline`
+around `OpenAsync`; the adapter still checks model-specific combinations.
 
 Provider configuration, model identifiers, wire options, DTOs, and exceptions
 stay in that external package.

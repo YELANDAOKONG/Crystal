@@ -286,6 +286,9 @@ content arrives as complete indexed content blocks.
 - Batch start and poll use the same opaque-ticket and local-cancellation
   semantics as single remote generation operations. Poll never submits a new
   batch as a fallback.
+- Consumers may opt into GenerationBatchValidation at submission or polling to
+  reject a completed response with an unexpected input count. Poll validation
+  requires the caller-retained submitted count and stores no operation state.
 
 ## Generated-media stream compatibility
 
@@ -302,6 +305,10 @@ content arrives as complete indexed content blocks.
 - A failed or canceled enumeration has no completed event. CancellationToken
   applies to enumeration and cooperative provider work; it does not imply
   remote cancellation of an accepted persistent job.
+- Consumers may opt into GenerationStreamValidation middleware to reject
+  malformed revision and chunk order or a missing, repeated, or nonterminal
+  completion event. This validation forwards exact events and does not repair
+  an adapter stream or construct final media.
 
 ## Realtime media session compatibility
 
@@ -321,6 +328,12 @@ content arrives as complete indexed content blocks.
 - CloseAsync releases local resources. Cancellation stops local cooperative
   work; Crystal provides no session store, reconnection, or provider-specific
   resumption token. These remain external adapter and caller concerns.
+- Consumers may opt into RealtimeOutputValidation for per-output contiguous
+  content indexes and completion boundaries. It forwards exact events and does
+  not reconnect, reorder, or assemble a response.
+- RealtimeSessionValidation can reject individually undeclared output
+  modalities, turn mode, tools, or reasoning before OpenAsync. Adapters still
+  reject unsupported combinations, initial context, and live input shapes.
 
 ## Tool protocol compatibility
 

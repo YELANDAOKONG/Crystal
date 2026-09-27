@@ -142,6 +142,8 @@ depending on tool execution, Agent runtime, or Harness composition.
 - Batch start and poll return the same opaque-ticket operation snapshots.
   Crystal does not split batches, persist tickets, choose retries, or emulate a
   batch with repeated immediate calls.
+- Optional batch validation compares a completed response with the submitted
+  request count; for polling, the caller supplies the original count.
 
 ### Generated-media streaming
 
@@ -257,6 +259,15 @@ depending on tool execution, Agent runtime, or Harness composition.
 - Opt-in multimodal Embedding input preflight checks only declared individual
   modalities and media source shapes. Model-specific combinations remain the
   external adapter's responsibility.
+- Opt-in generated-media stream validation checks provisional revision and
+  chunk order and requires one final completion event. It forwards exact events
+  and does not assemble bytes or change the authoritative final response.
+- Opt-in realtime output validation checks contiguous per-output content
+  indexes and rejects events for a completed output. It does not manage a
+  session or interpret text, media, reasoning, or tool content.
+- Opt-in realtime session preflight checks only declared output modalities,
+  turn mode, tools, and reasoning support before opening a connection. The
+  external adapter still validates model-specific combinations and context.
 
 ## Meaning of neutral
 

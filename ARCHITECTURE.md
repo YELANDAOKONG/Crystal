@@ -116,6 +116,37 @@ Its optional multimodal input preflight checks the declared modality and source
 kind of each content block before the client call. It does not open sources,
 inspect media, infer supported combinations, or replace adapter validation.
 
+GenerationStreamValidation provides opt-in streaming middleware for any
+target-specific generation request and response pair. It tracks only per-item
+revision and chunk metadata during one enumeration, rejects mixed previews and
+chunks at one revision, gaps or changes in a chunk sequence, incomplete
+revisions at completion, missing completion, and events after completion. It
+holds the final completion event until the source stream ends, then forwards the
+same event object. On cancellation or early disposal it does not synthesize a
+completion or persist provisional media. The adapter remains responsible for
+producing correct media and an exact authoritative response.
+
+RealtimeOutputValidation is a separate opt-in event-stream wrapper. During one
+enumeration it tracks the next content-segment index and completion status for
+each output ID, allowing interleaved outputs and tool-call events. It forwards
+accepted events unchanged, rejects gaps, duplicate completion, and content or
+reasoning after an output closes, and propagates cancellation. It does not
+require every output to complete when the caller ends enumeration, own the
+session connection, or reconstruct a transcript.
+
+RealtimeSessionValidation supplies optional asynchronous-operation middleware
+around OpenAsync. It checks requested output modalities, turn mode, tools, and
+reasoning against the configured client's declared individual capabilities
+before the adapter opens a connection. It forwards a valid request and token
+unchanged. Input content, initial context, and model-specific combinations
+remain adapter validation responsibilities.
+
+GenerationBatchValidation supplies opt-in asynchronous-operation middleware
+for batch submission and polling. A completed submission is checked against
+the exact request count received at that middleware position. Poll validation
+uses the original submitted count retained by the caller. Pending snapshots
+pass unchanged; Crystal retains neither the ticket nor the count between calls.
+
 ### Crystal.Workflows
 
 Owns typed graph construction, explicit conditional routing, bounded parallel
@@ -262,6 +293,8 @@ target-specific response, Failed, or Canceled. Whole-batch failure may instead
 appear as an outer Failed operation status. Batch clients do not decompose a
 batch into immediate calls or create a fallback job on poll. A batch-capable
 adapter decides and validates provider-specific size and combination limits.
+Callers may use GenerationBatchValidation to reject a completed response whose
+reported input count differs from the submitted count.
 
 Crystal.Generation.Streaming owns typed provisional media events and a final
 response event. Each target-output namespace defines an independent optional
