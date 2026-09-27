@@ -167,6 +167,25 @@ public sealed class WorkflowTests : IChatClient
     }
 
     [Fact]
+    public void AddEdgeRejectsDuplicateSourceTargetAndCondition()
+    {
+        var start = new WorkflowNode<int, int>(
+            "start", (inputs, _) => Task.FromResult(inputs));
+        var terminal = new WorkflowNode<int, int>(
+            "terminal", (inputs, _) => Task.FromResult(inputs));
+        var builder = new WorkflowBuilder<int, int>(start);
+        builder.AddEdge(start, terminal);
+
+        Assert.Throws<ArgumentException>(() => builder.AddEdge(start, terminal));
+
+        Func<int, CancellationToken, ValueTask<bool>> condition =
+            (value, _) => ValueTask.FromResult(value > 0);
+        builder.AddEdge(start, terminal, condition);
+        Assert.Throws<ArgumentException>(() =>
+            builder.AddEdge(start, terminal, condition));
+    }
+
+    [Fact]
     public async Task ObservedCancellationCannotBecomeNormalCompletion()
     {
         using var cancellation = new CancellationTokenSource();

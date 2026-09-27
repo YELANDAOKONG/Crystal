@@ -57,4 +57,18 @@ public sealed class MediaSourceTests
         await first.DisposeAsync();
         await second.DisposeAsync();
     }
+
+    [Fact]
+    public async Task ReplayableSourceRejectsSeekableStreamPastBeginning()
+    {
+        var stream = new MemoryStream([1, 2, 3]);
+        stream.Position = 2;
+        var source = new ReplayableStreamMediaSource(
+            _ => ValueTask.FromResult<Stream>(stream));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await source.OpenReadAsync());
+
+        Assert.False(stream.CanRead);
+    }
 }

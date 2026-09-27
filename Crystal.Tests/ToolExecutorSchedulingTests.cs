@@ -9,6 +9,59 @@ namespace Crystal.Tests;
 public sealed class ToolExecutorSchedulingTests
 {
     [Fact]
+    public async Task TextFailureStopsQueuedCallsWhileStartedCallFinishes()
+    {
+        var gate = new CallGate();
+        var executor = new ToolExecutor(
+            new ToolCatalog([new GatedTextTool(gate, "first")]),
+            new ToolExecutionOptions(ToolExecutionMode.Concurrent, 2));
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var execution = executor.ExecuteAsync(
+            [
+                new ToolCall("first", "known", "{}"),
+                new ToolCall("second", "known", "{}"),
+                new ToolCall("third", "known", "{}")
+            ], cancellation.Token);
+
+        await gate.WaitForStartAsync("first").WaitAsync(cancellation.Token);
+        await gate.WaitForStartAsync("second").WaitAsync(cancellation.Token);
+        gate.Release("first");
+        await Task.Delay(50, cancellation.Token);
+        gate.Release("second");
+
+        await Assert.ThrowsAsync<ToolInvocationException>(async () =>
+            await execution);
+        Assert.False(gate.HasStarted("third"));
+    }
+
+    [Fact]
+    public async Task MultimodalFailureStopsQueuedCallsWhileStartedCallFinishes()
+    {
+        var gate = new CallGate();
+        var executor = new MultimodalToolExecutor(
+            new MultimodalToolCatalog([new GatedMultimodalTool(gate, "first")]),
+            new MultimodalToolExecutionOptions(
+                MultimodalToolExecutionMode.Concurrent, 2));
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var execution = executor.ExecuteAsync(
+            [
+                new MultimodalToolCall("first", "known", "{}"),
+                new MultimodalToolCall("second", "known", "{}"),
+                new MultimodalToolCall("third", "known", "{}")
+            ], cancellation.Token);
+
+        await gate.WaitForStartAsync("first").WaitAsync(cancellation.Token);
+        await gate.WaitForStartAsync("second").WaitAsync(cancellation.Token);
+        gate.Release("first");
+        await Task.Delay(50, cancellation.Token);
+        gate.Release("second");
+
+        await Assert.ThrowsAsync<MultimodalToolInvocationException>(async () =>
+            await execution);
+        Assert.False(gate.HasStarted("third"));
+    }
+
+    [Fact]
     public async Task TextConcurrentExecutionBoundsStartsAndPreservesResultOrder()
     {
         var gate = new CallGate();
@@ -116,10 +169,12 @@ public sealed class ToolExecutorSchedulingTests
     private sealed class GatedTextTool : ITool
     {
         private readonly CallGate _gate;
+        private readonly string? _failingCallId;
 
-        public GatedTextTool(CallGate gate)
+        public GatedTextTool(CallGate gate, string? failingCallId = null)
         {
             _gate = gate;
+            _failingCallId = failingCallId;
             using var schema = JsonDocument.Parse("{}");
             Definition = new ToolDefinition("known", schema.RootElement);
         }
@@ -131,6 +186,11 @@ public sealed class ToolExecutorSchedulingTests
             CancellationToken cancellationToken = default)
         {
             await _gate.WaitForReleaseAsync(call.CallId, cancellationToken);
+            if (call.CallId == _failingCallId)
+            {
+                throw new InvalidOperationException("Tool failed.");
+            }
+
             return new ToolOutput($"result-{call.CallId}");
         }
     }
@@ -138,10 +198,12 @@ public sealed class ToolExecutorSchedulingTests
     private sealed class GatedMultimodalTool : IMultimodalTool
     {
         private readonly CallGate _gate;
+        private readonly string? _failingCallId;
 
-        public GatedMultimodalTool(CallGate gate)
+        public GatedMultimodalTool(CallGate gate, string? failingCallId = null)
         {
             _gate = gate;
+            _failingCallId = failingCallId;
             using var schema = JsonDocument.Parse("{}");
             Definition = new ToolDefinition("known", schema.RootElement);
         }
@@ -153,6 +215,11 @@ public sealed class ToolExecutorSchedulingTests
             CancellationToken cancellationToken = default)
         {
             await _gate.WaitForReleaseAsync(call.CallId, cancellationToken);
+            if (call.CallId == _failingCallId)
+            {
+                throw new InvalidOperationException("Tool failed.");
+            }
+
             return new MultimodalToolOutput([new TextContent($"result-{call.CallId}")]);
         }
     }

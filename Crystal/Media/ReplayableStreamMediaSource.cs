@@ -62,6 +62,13 @@ public sealed class ReplayableStreamMediaSource : MediaSource
                 "The media stream factory returned an unreadable stream.");
         }
 
+        if (stream.CanSeek && stream.Position != 0)
+        {
+            await stream.DisposeAsync().ConfigureAwait(false);
+            throw new InvalidOperationException(
+                "The media stream factory returned a stream that is not at its beginning.");
+        }
+
         return stream;
     }
 }

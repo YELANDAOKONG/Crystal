@@ -42,6 +42,15 @@ public sealed class WorkflowBuilder<TInput, TStartOutput>
         ArgumentNullException.ThrowIfNull(source, nameof(source));
         ArgumentNullException.ThrowIfNull(target, nameof(target));
 
+        if (_edges.Any(edge => ReferenceEquals(edge.Source, source)
+            && ReferenceEquals(edge.Target, target)
+            && Equals(edge.Condition, condition)))
+        {
+            throw new ArgumentException(
+                "The workflow edge is already registered.",
+                nameof(condition));
+        }
+
         Register(source);
         Register(target);
         _edges.Add(new WorkflowEdge<TMessage>(source, target, condition));

@@ -226,6 +226,8 @@ Tests must prove:
 - Concurrent results preserve original call order.
 - Concurrent tool dispatch bounds worker tasks by the configured concurrency;
   queued calls do not each allocate a waiting task.
+- After an unhandled concurrent tool failure, queued calls do not start;
+  already-started calls may finish.
 - A tool batch is not partially started when its full size exceeds remaining
   Agent budget.
 - Approval policies run before tool invocation.
@@ -269,6 +271,8 @@ Tests must prove:
 - Both Harness families check linked cancellation at invocation and forwarding
   boundaries. A custom Agent that ignores cancellation cannot produce a late
   forwarded event or normal Harness completion after cancellation is observed.
+- A finite Harness duration starts at session creation and shares one wall-clock
+  deadline across invocations, including pauses between streamed events.
 - Parent identifiers must refer to invocations registered in the same session.
 - Routing and topology remain caller-owned.
 - Session history storage, process-spanning recovery, and checkpointing belong

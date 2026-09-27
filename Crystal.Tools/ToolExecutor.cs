@@ -97,6 +97,7 @@ public sealed class ToolExecutor : IToolExecutor
     {
         var results = new ToolResult[calls.Count];
         var nextIndex = 0;
+        var hasFailure = false;
         var indexSync = new object();
         var workers = new Task[Math.Min(calls.Count, _options.MaximumConcurrency)];
 
@@ -116,7 +117,7 @@ public sealed class ToolExecutor : IToolExecutor
                 int callIndex;
                 lock (indexSync)
                 {
-                    if (nextIndex == calls.Count)
+                    if (hasFailure || nextIndex == calls.Count)
                     {
                         return;
                     }
@@ -124,10 +125,22 @@ public sealed class ToolExecutor : IToolExecutor
                     callIndex = nextIndex++;
                 }
 
-                results[callIndex] = await ExecuteCallAsync(
-                        calls[callIndex],
-                        cancellationToken)
-                    .ConfigureAwait(false);
+                try
+                {
+                    results[callIndex] = await ExecuteCallAsync(
+                            calls[callIndex],
+                            cancellationToken)
+                        .ConfigureAwait(false);
+                }
+                catch
+                {
+                    lock (indexSync)
+                    {
+                        hasFailure = true;
+                    }
+
+                    throw;
+                }
             }
         }
     }

@@ -86,4 +86,36 @@ public sealed record GenerationMediaChunkReceived<TResponse> :
 
     /// <summary>Gets whether the provisional encoded revision is complete.</summary>
     public bool IsLastChunk { get; }
+
+    /// <inheritdoc />
+    public bool Equals(GenerationMediaChunkReceived<TResponse>? other) =>
+        other is not null
+        && CandidateIndex == other.CandidateIndex
+        && ItemIndex == other.ItemIndex
+        && RevisionIndex == other.RevisionIndex
+        && ChunkIndex == other.ChunkIndex
+        && Equals(Modality, other.Modality)
+        && Equals(MimeType, other.MimeType)
+        && IsLastChunk == other.IsLastChunk
+        && _data.AsSpan().SequenceEqual(other._data);
+
+    /// <inheritdoc />
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(CandidateIndex);
+        hash.Add(ItemIndex);
+        hash.Add(RevisionIndex);
+        hash.Add(ChunkIndex);
+        hash.Add(Modality);
+        hash.Add(MimeType);
+        hash.Add(IsLastChunk);
+
+        foreach (var value in _data)
+        {
+            hash.Add(value);
+        }
+
+        return hash.ToHashCode();
+    }
 }

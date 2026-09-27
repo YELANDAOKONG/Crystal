@@ -180,7 +180,8 @@ Crystal.Workflows depending on that component.
 The builder snapshots a graph only when every registered node lies on a path
 from start to its sole terminal node, terminal has no outgoing edges, and node
 names are unique. An edge's message type must equal its target input type at
-compile time. A run invokes each active node once per superstep with all
+compile time. Registering the same source, target, and condition twice is
+rejected. A run invokes each active node once per superstep with all
 messages routed to it in the preceding superstep. Active nodes run with an
 explicit concurrency bound; completion and routing are processed in node,
 message, and edge registration order after all active node calls finish.
@@ -527,6 +528,8 @@ Agents and supplies parent invocation identifiers. The session:
   remainder;
 - returns unused reserved capacity after a successful run;
 - uses one shared wall-clock duration boundary when configured;
+- starts the finite duration timer at session creation, links it to each
+  invocation, and checks the same deadline at forwarded event boundaries;
 - propagates session and invocation cancellation; and
 - wraps Agent events with session, Agent, invocation, and parent identifiers.
 

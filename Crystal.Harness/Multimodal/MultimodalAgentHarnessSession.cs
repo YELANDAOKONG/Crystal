@@ -13,6 +13,7 @@ public sealed class MultimodalAgentHarnessSession
     private readonly IReadOnlyDictionary<string, IMultimodalAgent> _agents;
     private readonly Dictionary<Guid, int> _invocationDepths = [];
     private readonly CancellationToken _sessionCancellationToken;
+    private readonly CancellationTokenSource? _durationSource;
     private readonly long _startedTimestamp;
     private readonly object _sync = new();
     private readonly TimeProvider _timeProvider;
@@ -34,6 +35,9 @@ public sealed class MultimodalAgentHarnessSession
         _remainingModelCalls = limits.MaximumModelCalls;
         _remainingToolCalls = limits.MaximumToolCalls;
         _startedTimestamp = timeProvider.GetTimestamp();
+        _durationSource = limits.MaximumDuration is TimeSpan duration
+            ? new CancellationTokenSource(duration, timeProvider)
+            : null;
     }
 
     /// <inheritdoc />
@@ -115,8 +119,9 @@ public sealed class MultimodalAgentHarnessSession
         using var operationSource =
             CancellationTokenSource.CreateLinkedTokenSource(
                 _sessionCancellationToken,
-                cancellationToken);
-        operationSource.Token.ThrowIfCancellationRequested();
+                cancellationToken,
+                _durationSource?.Token ?? default);
+        ThrowIfSessionDurationExpired(operationSource.Token);
 
         yield return new MultimodalHarnessInvocationStartedEvent(
             SessionId,
@@ -125,7 +130,7 @@ public sealed class MultimodalAgentHarnessSession
             request.ParentInvocationId,
             sequence++,
             effectiveLimits);
-        operationSource.Token.ThrowIfCancellationRequested();
+        ThrowIfSessionDurationExpired(operationSource.Token);
 
         MultimodalAgentRunResult? agentResult = null;
 
@@ -134,7 +139,7 @@ public sealed class MultimodalAgentHarnessSession
                 operationSource.Token)
             .ConfigureAwait(false))
         {
-            operationSource.Token.ThrowIfCancellationRequested();
+            ThrowIfSessionDurationExpired(operationSource.Token);
             if (agentResult is not null)
             {
                 throw new InvalidOperationException(
@@ -153,10 +158,10 @@ public sealed class MultimodalAgentHarnessSession
                 request.ParentInvocationId,
                 sequence++,
                 agentEvent);
-            operationSource.Token.ThrowIfCancellationRequested();
+            ThrowIfSessionDurationExpired(operationSource.Token);
         }
 
-        operationSource.Token.ThrowIfCancellationRequested();
+        ThrowIfSessionDurationExpired(operationSource.Token);
 
         if (agentResult is null)
         {
@@ -174,7 +179,7 @@ public sealed class MultimodalAgentHarnessSession
             request.ParentInvocationId,
             agentResult);
 
-        operationSource.Token.ThrowIfCancellationRequested();
+        ThrowIfSessionDurationExpired(operationSource.Token);
 
         yield return new MultimodalHarnessInvocationCompletedEvent(
             SessionId,
@@ -288,6 +293,17 @@ public sealed class MultimodalAgentHarnessSession
 
         var elapsed = _timeProvider.GetElapsedTime(_startedTimestamp);
         return maximumDuration - elapsed;
+    }
+
+    private void ThrowIfSessionDurationExpired(CancellationToken operationToken)
+    {
+        if (GetRemainingDuration() is TimeSpan remainingDuration
+            && remainingDuration <= TimeSpan.Zero)
+        {
+            _durationSource!.Cancel();
+        }
+
+        operationToken.ThrowIfCancellationRequested();
     }
 
     private static int? MinLimit(int? first, int? second)

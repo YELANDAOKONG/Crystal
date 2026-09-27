@@ -33,7 +33,7 @@ public static class PipelineRetries
 
             return async (request, cancellationToken) =>
             {
-                for (var attempt = 1; ; attempt++)
+                for (var attempt = 1; ;)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
@@ -64,6 +64,7 @@ public static class PipelineRetries
                         }
 
                         cancellationToken.ThrowIfCancellationRequested();
+                        attempt++;
                     }
                 }
             };

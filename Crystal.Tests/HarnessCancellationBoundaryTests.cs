@@ -23,6 +23,53 @@ public sealed class HarnessCancellationBoundaryTests : IAgent, IMultimodalAgent
         new([_textCapability], [_textCapability]);
 
     [Fact]
+    public async Task TextSessionDeadlineDuringStartPausePreventsAgentInvocation()
+    {
+        var name = new AgentName("worker");
+        var harness = new AgentHarness([new AgentRegistration(name, this)]);
+        var session = harness.CreateSession(Guid.NewGuid(),
+            new HarnessLimits(0, 1, 0, TimeSpan.FromMilliseconds(50)));
+        var request = new AgentInvocationRequest(
+            Guid.NewGuid(), name, [], AgentRunLimits.Unlimited);
+        await using var events = session.StreamAsync(request).GetAsyncEnumerator();
+
+        Assert.True(await events.MoveNextAsync());
+        Assert.IsType<HarnessInvocationStartedEvent>(events.Current);
+        await Task.Delay(150);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+        {
+            await events.MoveNextAsync();
+        });
+        Assert.Equal(0, _textStarts);
+    }
+
+    [Fact]
+    public async Task MultimodalSessionDeadlineDuringForwardedPauseSuppressesCompletion()
+    {
+        var name = new MultimodalAgentName("worker");
+        var harness = new MultimodalAgentHarness(
+            [new MultimodalAgentRegistration(name, this)]);
+        var session = harness.CreateSession(Guid.NewGuid(),
+            new MultimodalHarnessLimits(0, 1, 0,
+                TimeSpan.FromMilliseconds(50)));
+        var request = new MultimodalAgentInvocationRequest(
+            Guid.NewGuid(), name, [], MultimodalAgentRunLimits.Unlimited);
+        await using var events = session.StreamAsync(request).GetAsyncEnumerator();
+
+        Assert.True(await events.MoveNextAsync());
+        Assert.True(await events.MoveNextAsync());
+        Assert.IsType<MultimodalHarnessAgentEvent>(events.Current);
+        await Task.Delay(150);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+        {
+            await events.MoveNextAsync();
+        });
+        Assert.Equal(1, _multimodalStarts);
+    }
+
+    [Fact]
     public async Task TextCallerCancellationAfterStartPreventsAgentInvocation()
     {
         var name = new AgentName("worker");

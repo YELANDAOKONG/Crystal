@@ -6,6 +6,8 @@ internal interface IWorkflowEdge
 
     IWorkflowNode Target { get; }
 
+    Delegate? Condition { get; }
+
     ValueTask<bool> AcceptsAsync(
         object message,
         CancellationToken cancellationToken);

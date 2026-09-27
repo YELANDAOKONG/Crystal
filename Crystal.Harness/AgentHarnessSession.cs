@@ -12,6 +12,7 @@ public sealed class AgentHarnessSession : IAgentHarnessSession
     private readonly IReadOnlyDictionary<string, IAgent> _agents;
     private readonly Dictionary<Guid, int> _invocationDepths = [];
     private readonly CancellationToken _sessionCancellationToken;
+    private readonly CancellationTokenSource? _durationSource;
     private readonly long _startedTimestamp;
     private readonly object _sync = new();
     private readonly TimeProvider _timeProvider;
@@ -33,6 +34,9 @@ public sealed class AgentHarnessSession : IAgentHarnessSession
         _remainingModelCalls = limits.MaximumModelCalls;
         _remainingToolCalls = limits.MaximumToolCalls;
         _startedTimestamp = timeProvider.GetTimestamp();
+        _durationSource = limits.MaximumDuration is TimeSpan duration
+            ? new CancellationTokenSource(duration, timeProvider)
+            : null;
     }
 
     /// <inheritdoc />
@@ -113,8 +117,9 @@ public sealed class AgentHarnessSession : IAgentHarnessSession
         using var operationSource =
             CancellationTokenSource.CreateLinkedTokenSource(
                 _sessionCancellationToken,
-                cancellationToken);
-        operationSource.Token.ThrowIfCancellationRequested();
+                cancellationToken,
+                _durationSource?.Token ?? default);
+        ThrowIfSessionDurationExpired(operationSource.Token);
 
         yield return new HarnessInvocationStartedEvent(
             SessionId,
@@ -123,7 +128,7 @@ public sealed class AgentHarnessSession : IAgentHarnessSession
             request.ParentInvocationId,
             sequence++,
             effectiveLimits);
-        operationSource.Token.ThrowIfCancellationRequested();
+        ThrowIfSessionDurationExpired(operationSource.Token);
 
         AgentRunResult? agentResult = null;
 
@@ -132,7 +137,7 @@ public sealed class AgentHarnessSession : IAgentHarnessSession
                 operationSource.Token)
             .ConfigureAwait(false))
         {
-            operationSource.Token.ThrowIfCancellationRequested();
+            ThrowIfSessionDurationExpired(operationSource.Token);
             if (agentResult is not null)
             {
                 throw new InvalidOperationException(
@@ -151,10 +156,10 @@ public sealed class AgentHarnessSession : IAgentHarnessSession
                 request.ParentInvocationId,
                 sequence++,
                 agentEvent);
-            operationSource.Token.ThrowIfCancellationRequested();
+            ThrowIfSessionDurationExpired(operationSource.Token);
         }
 
-        operationSource.Token.ThrowIfCancellationRequested();
+        ThrowIfSessionDurationExpired(operationSource.Token);
 
         if (agentResult is null)
         {
@@ -172,7 +177,7 @@ public sealed class AgentHarnessSession : IAgentHarnessSession
             request.ParentInvocationId,
             agentResult);
 
-        operationSource.Token.ThrowIfCancellationRequested();
+        ThrowIfSessionDurationExpired(operationSource.Token);
 
         yield return new HarnessInvocationCompletedEvent(
             SessionId,
@@ -286,6 +291,17 @@ public sealed class AgentHarnessSession : IAgentHarnessSession
 
         var elapsed = _timeProvider.GetElapsedTime(_startedTimestamp);
         return maximumDuration - elapsed;
+    }
+
+    private void ThrowIfSessionDurationExpired(CancellationToken operationToken)
+    {
+        if (GetRemainingDuration() is TimeSpan remainingDuration
+            && remainingDuration <= TimeSpan.Zero)
+        {
+            _durationSource!.Cancel();
+        }
+
+        operationToken.ThrowIfCancellationRequested();
     }
 
     private static int? MinLimit(int? first, int? second)

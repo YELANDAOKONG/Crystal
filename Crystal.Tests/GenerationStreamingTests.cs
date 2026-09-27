@@ -57,4 +57,25 @@ public sealed class GenerationStreamingTests
             new GenerationMediaPreviewReceived<ImageGenerationResponse>(
                 0, 0, 0, new TextContent("not media")));
     }
+
+    [Fact]
+    public void EqualEncodedChunksHaveEqualHashesAndCopiedDataComparesByContent()
+    {
+        var first = new GenerationMediaChunkReceived<ImageGenerationResponse>(
+            0, 1, 2, 3, ContentModality.Image,
+            new MediaMimeType("image/png"), new byte[] { 1, 2 }, true);
+        var equal = new GenerationMediaChunkReceived<ImageGenerationResponse>(
+            0, 1, 2, 3, ContentModality.Image,
+            new MediaMimeType("image/png"), new byte[] { 1, 2 }, true);
+        var different = new GenerationMediaChunkReceived<ImageGenerationResponse>(
+            0, 1, 2, 3, ContentModality.Image,
+            new MediaMimeType("image/png"), new byte[] { 1, 3 }, true);
+
+        Assert.Equal(first, equal);
+        Assert.Equal(first.GetHashCode(), equal.GetHashCode());
+        Assert.Single(new HashSet<GenerationMediaChunkReceived<ImageGenerationResponse>>
+            { first, equal });
+        Assert.NotEqual(first, different);
+        Assert.True(first.Data.Span.SequenceEqual(first.Data.Span));
+    }
 }

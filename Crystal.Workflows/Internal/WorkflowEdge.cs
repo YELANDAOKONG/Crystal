@@ -20,6 +20,8 @@ internal sealed class WorkflowEdge<TMessage> : IWorkflowEdge
 
     public IWorkflowNode Target { get; }
 
+    public Delegate? Condition => _condition;
+
     public ValueTask<bool> AcceptsAsync(
         object message,
         CancellationToken cancellationToken) =>
