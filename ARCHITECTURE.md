@@ -102,6 +102,10 @@ stream middleware to a client without streaming support fails at construction.
 The adapters forward exact requests, responses, events, and cancellation tokens
 unless caller-supplied middleware explicitly changes them. The public `Clients`
 entry point selects the wrapper for each client family.
+Internal adapters are grouped by Chat, Completions, Embeddings, and Generation.
+The public `Clients` and `EmbeddingValidation` entry points retain the
+`Crystal.Decorators` namespace; the internal folder namespaces are not public
+API.
 
 EmbeddingValidation provides opt-in middleware for the existing one-vector-per-input
 contract in both text and multimodal Embedding. It compares the response

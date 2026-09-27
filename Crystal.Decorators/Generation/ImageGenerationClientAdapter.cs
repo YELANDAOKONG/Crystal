@@ -2,7 +2,7 @@ using Crystal.Generation;
 using Crystal.Generation.Images;
 using Crystal.Pipelines;
 
-namespace Crystal.Decorators;
+namespace Crystal.Decorators.Generation;
 
 internal sealed class ImageGenerationClientAdapter : IImageGenerationClient
 {

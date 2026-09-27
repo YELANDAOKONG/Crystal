@@ -1,5 +1,9 @@
 using Crystal.Chat;
 using Crystal.Completions;
+using Crystal.Decorators.Chat;
+using Crystal.Decorators.Completions;
+using Crystal.Decorators.Embeddings;
+using Crystal.Decorators.Generation;
 using Crystal.Embeddings;
 using Crystal.Generation.Audio;
 using Crystal.Generation.Images;

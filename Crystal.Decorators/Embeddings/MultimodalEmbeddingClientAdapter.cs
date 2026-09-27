@@ -1,7 +1,7 @@
 using Crystal.Multimodal.Embeddings;
 using Crystal.Pipelines;
 
-namespace Crystal.Decorators;
+namespace Crystal.Decorators.Embeddings;
 
 internal sealed class MultimodalEmbeddingClientAdapter : IMultimodalEmbeddingClient
 {

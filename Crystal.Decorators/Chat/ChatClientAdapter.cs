@@ -1,7 +1,7 @@
 using Crystal.Chat;
 using Crystal.Pipelines;
 
-namespace Crystal.Decorators;
+namespace Crystal.Decorators.Chat;
 
 internal sealed class ChatClientAdapter : IChatClient
 {
