@@ -253,6 +253,12 @@ content arrives as complete indexed content blocks.
   previews, resumable remote handles, remote cancellation, and realtime sessions
   are not represented by the immediate interfaces. CancellationToken cancels
   local cooperative work; it does not imply cancellation of an already submitted persistent provider job.
+- An adapter may implement both immediate and streaming generation interfaces.
+  The immediate Crystal.Decorators wrapper preserves the stream interface in
+  that case and applies separate caller-owned middleware to each path. If the
+  two interfaces report different capability objects, the wrapper exposes the
+  exact object reported by each interface. Stream middleware supplied for an
+  immediate-only client is rejected.
 
 ## Remote generation operation compatibility
 

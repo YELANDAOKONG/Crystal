@@ -252,11 +252,13 @@ depending on tool execution, Agent runtime, or Harness composition.
   caller-owned decision after each failure. The same request object is replayed;
   callers own cost, replay safety, and any repeated side effects.
 - Typed wrappers for Chat, Completion, text and multimodal Embedding,
-  multimodal Chat, and immediate image, audio, and video generation. Chat
-  wrappers expose streaming only when the underlying client does. Independent
-  streaming, remote-operation, and batch generation wrappers preserve each
-  independent client's capability profile. Operation and batch wrappers apply
-  separate caller-owned middleware to start and poll calls.
+  multimodal Chat, and immediate image, audio, and video generation. Chat and
+  immediate-generation wrappers expose streaming only when the underlying
+  client does. Independent streaming, remote-operation, and batch generation
+  wrappers preserve each independent client's capability profile. A combined
+  immediate and streaming generation wrapper retains each interface's declared
+  capability object. Operation and batch wrappers apply separate caller-owned
+  middleware to start and poll calls.
 - A realtime media client wrapper composes caller-owned session-opening
   middleware while preserving the exact live session and capability profile.
 - Opt-in text and multimodal Embedding cardinality checks reject an adapter

@@ -99,9 +99,12 @@ and video generation, and realtime session opening. Separate typed adapters
 wrap streaming, remote-operation, and batch generation clients without
 requiring an immediate client. It references Crystal and Crystal.Pipelines
 without a dependency on executable Tools, Agents, or Harnesses. Wrapping
-preserves the client's declared capability object. Chat wrappers preserve an optional
-streaming interface; supplying stream middleware to a Chat client without
-streaming support fails at construction.
+preserves the client's declared capability object. Chat and immediate-generation
+wrappers preserve an optional streaming interface. If one generation client
+implements both interfaces and declares different capability objects for them,
+each interface on the wrapper exposes its corresponding original object.
+Supplying stream middleware to a client without streaming support fails at
+construction.
 The adapters forward exact requests, responses, events, and cancellation tokens
 unless caller-supplied middleware explicitly changes them. The public `Clients`
 entry point selects the wrapper for each client family.

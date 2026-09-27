@@ -571,6 +571,13 @@ candidate, item, and revision indexes. A successful stream ends with one event
 containing the authoritative complete response. Preview revisions can change;
 the final response decides the result.
 
+If a configured generation client implements both its immediate and streaming
+interfaces, `Clients.ForImageGeneration`, `ForAudioGeneration`, or
+`ForVideoGeneration` preserves both interfaces and accepts separate middleware
+for complete responses and streams. Each interface retains its own declared
+capabilities. Passing stream middleware for an immediate-only client fails at
+construction.
+
 `Clients.ForStreamingImageGeneration`, `ForStreamingAudioGeneration`, and
 `ForStreamingVideoGeneration` compose stream middleware while retaining each
 independent client interface and its declared capabilities.

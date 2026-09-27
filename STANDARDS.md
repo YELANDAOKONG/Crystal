@@ -36,8 +36,10 @@
 - Crystal.Pipelines has no project references and remains usable for any typed
   asynchronous request/response or event stream.
 - Crystal.Decorators references only Crystal and Crystal.Pipelines. It
-  preserves a wrapped client's capability profile. Chat wrappers preserve an
-  optional streaming interface and reject unsupported streaming middleware.
+  preserves a wrapped client's capability profile. Chat and immediate-generation
+  wrappers preserve an optional streaming interface and reject unsupported
+  streaming middleware. A combined generation wrapper preserves each
+  interface's own capability object, even when the two differ.
   Streaming, operation, and batch generation wrappers retain their independent
   interfaces. Operation and batch start and poll calls have separate pipelines;
   wrappers never retain operation tickets or schedule polling.
