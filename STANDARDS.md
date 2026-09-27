@@ -256,6 +256,8 @@ Tests must prove:
 - Opt-in embedding cardinality middleware compares the response with the
   request at its middleware position and does not change valid vectors, order,
   usage, or cancellation tokens.
+- Multimodal embedding input-shape preflight may inspect only typed modalities
+  and media source kinds; it must not open, read, fetch, or transform media.
 
 ## Dependency decision
 

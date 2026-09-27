@@ -45,6 +45,8 @@ change. Implementation must never become the only source of truth.
   without widening their portable capability or streaming support.
 - Optional EmbeddingValidation middleware checks text or multimodal embedding
   response cardinality against the request at the point where it is composed.
+- Multimodal embedding may opt into validation of individually advertised input
+  modalities and media source kinds without inspecting or opening media.
 - Session storage and recovery across process lifetimes belong to callers.
   Crystal does not own a durable session store or checkpoint restoration.
 - Future media lifecycles must remain additive and explicit. Do not add

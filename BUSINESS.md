@@ -182,6 +182,9 @@ depending on tool execution, Agent runtime, or Harness composition.
   exposes streaming only when its underlying client does.
 - Opt-in text and multimodal Embedding cardinality checks reject an adapter
   response that lacks exactly one vector for each input.
+- Opt-in multimodal Embedding input preflight checks only declared individual
+  modalities and media source shapes. Model-specific combinations remain the
+  external adapter's responsibility.
 
 ## Meaning of neutral
 

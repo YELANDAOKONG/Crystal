@@ -281,6 +281,9 @@ combination, or cardinality rather than silently removing or rewriting blocks.
 Consumers may opt into EmbeddingValidation middleware to reject a wrong vector
 count at their client boundary; an adapter remains responsible for correct
 vector-to-input correspondence and order.
+The optional declared-input-shape preflight can reject individual unsupported
+modalities and source kinds without accessing media. It cannot establish that a
+combination or batch size is supported by the configured model.
 
 Capabilities advertise individual accepted modalities and source shapes, not
 every combination. Media sources retain their existing ownership and expiration

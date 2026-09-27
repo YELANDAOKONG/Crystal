@@ -1,5 +1,6 @@
 using Crystal.Decorators;
 using Crystal.Embeddings;
+using Crystal.Media;
 using Crystal.Multimodal;
 using Crystal.Multimodal.Embeddings;
 using Crystal.Pipelines;
@@ -8,6 +9,99 @@ namespace Crystal.Tests;
 
 public sealed class EmbeddingValidationTests
 {
+    [Fact]
+    public async Task DeclaredShapesPassWithoutOpeningMediaOrChangingRequest()
+    {
+        var opened = false;
+        var replayable = new ReplayableStreamMediaSource(_ =>
+        {
+            opened = true;
+            return ValueTask.FromResult<Stream>(new MemoryStream([1]));
+        });
+        var request = new MultimodalEmbeddingRequest(
+        [
+            new MultimodalEmbeddingInput(
+            [
+                new TextContent("exact"),
+                new ImageContent(new ImageMedia(
+                    new InlineMediaSource(new byte[] { 1 }),
+                    new MediaMimeType("image/png"))),
+                new VideoContent(new VideoMedia(
+                    replayable,
+                    new MediaMimeType("video/mp4")))
+            ])
+        ]);
+        var capabilities = new MultimodalEmbeddingCapabilities(
+        [
+            new MultimodalContentCapability(ContentModality.Text),
+            new MultimodalContentCapability(
+                ContentModality.Image,
+                [MediaSourceKind.Inline]),
+            new MultimodalContentCapability(
+                ContentModality.Video,
+                [MediaSourceKind.ReplayableStream])
+        ]);
+        var response = new MultimodalEmbeddingResponse(
+            [new EmbeddingVector(new float[] { 1 })]);
+        using var cancellation = new CancellationTokenSource();
+        var pipeline = new AsyncPipeline<MultimodalEmbeddingRequest,
+            MultimodalEmbeddingResponse>(
+            (actual, token) =>
+            {
+                Assert.Same(request, actual);
+                Assert.Equal(cancellation.Token, token);
+                return Task.FromResult(response);
+            },
+            [EmbeddingValidation.RequireDeclaredInputShapes(capabilities)]);
+
+        var actual = await pipeline.InvokeAsync(request, cancellation.Token);
+
+        Assert.Same(response, actual);
+        Assert.False(opened);
+    }
+
+    [Fact]
+    public async Task UndeclaredShapesAreRejectedBeforeProviderInvocation()
+    {
+        var capabilities = new MultimodalEmbeddingCapabilities(
+            [
+                new MultimodalContentCapability(ContentModality.Text),
+                new MultimodalContentCapability(
+                    ContentModality.Image,
+                    [MediaSourceKind.Inline])
+            ]);
+        var invoked = false;
+        var pipeline = new AsyncPipeline<MultimodalEmbeddingRequest,
+            MultimodalEmbeddingResponse>(
+            (_, _) =>
+            {
+                invoked = true;
+                throw new InvalidOperationException();
+            },
+            [EmbeddingValidation.RequireDeclaredInputShapes(capabilities)]);
+        var uri = new Uri("https://example.test/private-image");
+        var wrongSource = new MultimodalEmbeddingRequest(
+            [new MultimodalEmbeddingInput(
+                [new ImageContent(new ImageMedia(
+                    new UriMediaSource(uri),
+                    new MediaMimeType("image/png")))])]);
+        var wrongModality = new MultimodalEmbeddingRequest(
+            [new MultimodalEmbeddingInput(
+                [new AudioContent(new AudioMedia(
+                    new InlineMediaSource(new byte[] { 1 }),
+                    new MediaMimeType("audio/wav")))])]);
+
+        foreach (var request in new[] { wrongSource, wrongModality })
+        {
+            var failure = await Assert.ThrowsAsync<ArgumentException>(() =>
+                pipeline.InvokeAsync(request));
+            Assert.Equal("request", failure.ParamName);
+            Assert.DoesNotContain("private-image", failure.Message);
+        }
+
+        Assert.False(invoked);
+    }
+
     [Fact]
     public async Task TextValidationReturnsExactValidResponse()
     {

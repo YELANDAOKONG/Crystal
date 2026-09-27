@@ -100,6 +100,10 @@ operation, reject it, or return an exact caller-owned result.
 `EmbeddingValidation.RequireMultimodalCardinality()` are optional middleware
 that reject a response with a vector count different from its request input
 count. Adapters still own the correspondence and order of returned vectors.
+`EmbeddingValidation.RequireDeclaredInputShapes(client.Capabilities)` can also
+reject an undeclared multimodal Embedding modality or media source kind before
+calling the client. It does not validate model-specific combinations or read
+media.
 
 ## Using Crystal
 
