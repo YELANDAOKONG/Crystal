@@ -129,6 +129,15 @@ Its optional multimodal input preflight checks the declared modality and source
 kind of each content block before the client call. It does not open sources,
 inspect media, infer supported combinations, or replace adapter validation.
 
+GenerationValidation supplies optional asynchronous-operation and streaming
+middleware for generation input preflight. A caller selector exposes the exact
+inputs from a single request or an ordered batch; the middleware checks each
+input's modality, purpose, and media source kind against the configured client's
+declared individual capabilities before invoking the client. It forwards a valid
+request, token, and stream events unchanged. It neither opens media nor checks
+provider-specific combinations, output requirements, or requested candidate
+counts; those remain adapter responsibilities.
+
 GenerationStreamValidation provides opt-in streaming middleware for any
 target-specific generation request and response pair. It tracks only per-item
 revision and chunk metadata during one enumeration, rejects mixed previews and

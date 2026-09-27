@@ -266,6 +266,9 @@ depending on tool execution, Agent runtime, or Harness composition.
 - Opt-in multimodal Embedding input preflight checks only declared individual
   modalities and media source shapes. Model-specific combinations remain the
   external adapter's responsibility.
+- Opt-in generation input preflight checks declared modality, purpose, and
+  media source shape for caller-selected single or batch requests before
+  invoking a client. It does not inspect media or infer conditional model rules.
 - Opt-in generated-media stream validation checks provisional revision and
   chunk order and requires one final completion event. It forwards exact events
   and does not assemble bytes or change the authoritative final response.

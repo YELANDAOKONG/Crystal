@@ -54,6 +54,8 @@ change. Implementation must never become the only source of truth.
   response cardinality against the request at the point where it is composed.
 - Multimodal embedding may opt into validation of individually advertised input
   modalities and media source kinds without inspecting or opening media.
+- Generation calls may opt into validation of declared input modality, purpose,
+  and media source kind through caller-selected inputs before client work starts.
 - Generated-media streams may opt into validation of revision and chunk order,
   and of one final completion event, without assembling or storing media.
 - Generation batches may opt into completed-response cardinality validation;

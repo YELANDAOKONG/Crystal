@@ -231,6 +231,10 @@ content arrives as complete indexed content blocks.
 - Ordered typed inputs may include text, image, audio, and video whenever the
   client advertises the corresponding modality, purpose, and source shape. In
   particular, video generation can advertise audio reference or source input.
+- GenerationValidation offers opt-in preflight for each individually declared
+  input modality, purpose, and media source shape. A caller-selected projection
+  also supports batch requests and stream clients. It does not replace adapter
+  checks for combinations, output requirements, or model-specific limits.
 - Source and mask inputs express editing or transformation. Adapters must not
   invent a generation mode or rewrite inputs to emulate an unsupported edit API.
 - Output source shape, MIME, dimensions, aspect ratio, duration, frame rate,

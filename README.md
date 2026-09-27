@@ -582,6 +582,13 @@ construction.
 `ForStreamingVideoGeneration` compose stream middleware while retaining each
 independent client interface and its declared capabilities.
 
+`GenerationValidation.RequireDeclaredInputShapes` can preflight a generation
+request's declared input modality, purpose, and media source kind in an
+`AsyncPipeline`; `RequireDeclaredStreamInputShapes` does the same before a
+stream starts. The caller supplies an input selector, so a batch can select
+inputs from every submitted request. These checks do not read media or replace
+adapter validation of model-specific combinations and output requirements.
+
 `GenerationStreamValidation.RequireProtocol<TRequest, TResponse>()` can be
 added to one of these wrappers or a `StreamingPipeline` to reject out-of-order
 or incomplete provisional media and missing or repeated completion. It forwards

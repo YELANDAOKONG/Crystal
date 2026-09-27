@@ -167,6 +167,9 @@ Tests must prove:
   same order and reject unsupported combinations without rewriting media.
 - Capability profiles advertise individual input and output shapes. Do not build
   a provider constraint DSL into core contracts.
+- Optional generation input preflight checks only individually declared
+  modality, purpose, and source kind before invoking the client. The caller
+  selects inputs; adapters still enforce combinations and hard requirements.
 - Generation requirements, including requested output source shape, are hard.
   Adapters reject unsupported requirements or combinations rather than dropping,
   rewriting, or approximating them.
