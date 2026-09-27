@@ -27,18 +27,25 @@ change. Implementation must never become the only source of truth.
 - The current release line also supports explicit media sources, typed image,
   audio, and video values, non-streaming and optional typed streaming
   multimodal Chat, Tool, Agent, and Harness families, and immediate image,
-  audio, and video generation clients.
+  audio, and video generation clients. Separate optional image, audio, and video
+  streaming, operation, and batch clients support provisional output and
+  caller-retained tickets with remote polling.
 - Text and multimodal client, Tool, Agent, and Harness contracts are independent.
   Existing text interfaces remain usable without accepting or returning media.
 - Text and multimodal Agents consume optional typed Chat streams when configured
   clients provide them, forwarding exact events before selecting a candidate.
 - Agent and Harness budget dimensions may be independently finite or explicitly
   unlimited; cancellation remains effective in either case.
-- The current release line contains no generic attachment or file-content bag,
-  PDF contract, batch generation, generated-media streaming, resumable generation
-  operation, or realtime media session.
+- The current release line supports an independent duplex realtime media
+  session contract with exact caller input, typed output segments, tool-result
+  correlation, and explicit or automatic turn boundaries.
+- The current release line contains no generic attachment or file-content bag
+  or PDF contract.
 - Crystal.Pipelines is an independent, generic middleware library for typed
   asynchronous operations and event streams.
+- Crystal.Workflows is an independent, caller-defined typed graph runtime with
+  conditional edges, bounded concurrent supersteps, same-step input merging,
+  ordered metadata events, and optional step limits. It owns no session store.
 - Optional exception retries in Crystal.Pipelines require a caller decision
   after each failure and a finite attempt bound; there is no default retry.
 - Crystal.Decorators applies those pipelines to current client contracts
@@ -48,7 +55,9 @@ change. Implementation must never become the only source of truth.
 - Multimodal embedding may opt into validation of individually advertised input
   modalities and media source kinds without inspecting or opening media.
 - Session storage and recovery across process lifetimes belong to callers.
-  Crystal does not own a durable session store or checkpoint restoration.
+  Crystal does not own a durable session store, operation-ticket store, or
+  checkpoint restoration. Realtime sessions are live connection boundaries and
+  cannot be restored by Crystal.
 - Future media lifecycles must remain additive and explicit. Do not add
   placeholders that reserve names without implemented portable semantics.
 

@@ -8,9 +8,10 @@ names may change while the design documents and implementation change together.
 
 ## Dependency direction
 
-Crystal currently ships six production assemblies. Four form a one-way
-runtime dependency chain; Crystal.Pipelines is independent and
-Crystal.Decorators depends only on the protocol and generic pipeline layers:
+Crystal currently ships seven production assemblies. Four form a one-way
+runtime dependency chain; Crystal.Pipelines and Crystal.Workflows are
+independent, while Crystal.Decorators depends only on the protocol and generic
+pipeline layers:
 
 ~~~text
 Crystal.Harness
@@ -22,6 +23,8 @@ Crystal.Tools
 Crystal
 
 Crystal.Pipelines (no project references)
+
+Crystal.Workflows (no project references)
 
 Crystal.Decorators → Crystal + Crystal.Pipelines
 ~~~
@@ -40,8 +43,10 @@ No Crystal assembly depends on external implementations.
 ### Crystal
 
 Owns cross-capability primitives, Reasoning, Embeddings, Completions, text Chat,
-media sources and values, typed multimodal content, Chat, and Embedding,
-immediate image, audio, and video generation, and all model-facing text and multimodal tool
+media sources and values, typed multimodal content, Chat, Embedding, and live
+sessions,
+immediate, streaming, resumable-operation, and batch image, audio, and video
+generation, and all model-facing text and multimodal tool
 protocol values. Keeping protocol values in Crystal lets provider adapters
 represent complete traffic without depending on executable tool infrastructure.
 
@@ -106,6 +111,36 @@ or mismatched count. It performs no provider inference or vector transformation.
 Its optional multimodal input preflight checks the declared modality and source
 kind of each content block before the client call. It does not open sources,
 inspect media, infer supported combinations, or replace adapter validation.
+
+### Crystal.Workflows
+
+Owns typed graph construction, explicit conditional routing, bounded parallel
+node execution, metadata-only transition events, and run results. It has no
+project references. Nodes are caller-owned operations, so an application can
+invoke an Agent or any other asynchronous component inside a node without
+Crystal.Workflows depending on that component.
+
+The builder snapshots a graph only when every registered node lies on a path
+from start to its sole terminal node, terminal has no outgoing edges, and node
+names are unique. An edge's message type must equal its target input type at
+compile time. A run invokes each active node once per superstep with all
+messages routed to it in the preceding superstep. Active nodes run with an
+explicit concurrency bound; completion and routing are processed in node,
+message, and edge registration order after all active node calls finish.
+Conditions are caller-owned asynchronous predicates. An accepted edge forwards
+the same message object without copying, serialization, or text rewriting.
+Fan-in is a same-superstep ordered batch, not an implicit wait for every
+predecessor across different path lengths. A terminal node may run multiple
+times and its outputs are appended in execution order.
+
+The optional superstep maximum includes executed steps and stops before the
+next one; null means no configured step limit. Cancellation propagates to nodes
+and conditions and takes precedence over normal or limit completion. A failing
+node or condition fails the run; already-started concurrent side effects are
+not rolled back. Early stream disposal stops later routing and node work.
+Events contain node names, counts, and route indexes without message payloads;
+the terminal event contains the exact caller-owned result. The runtime stores
+no durable state and supplies no human-interaction, checkpoint, or retry policy.
 
 Namespaces continue to express domain ownership. The Crystal.Tools namespace is
 intentionally present in both Crystal and Crystal.Tools because its protocol
@@ -186,8 +221,9 @@ Role-specific, cardinality, and conditional model rules remain adapter-owned.
 
 Owns shared ordered typed conditioning inputs, portable input purposes, coarse
 input/output capabilities, and ordered candidate items. Image, audio, and video
-requests, hard requirements, responses, and immediate client interfaces live in
-separate target-output namespaces so their lifecycles can evolve independently.
+requests, hard requirements, responses, immediate clients, and optional
+streaming, remote operation, and batch clients live in separate target-output
+namespaces so their lifecycles can evolve independently.
 
 Generation input purposes are closed portable semantics: instruction, reference,
 source, mask, first frame, and last frame. Image, audio, and video inputs remain
@@ -198,6 +234,72 @@ inputs; Crystal has no universal edit mode or edit client.
 Requirements are hard constraints. An adapter must reject a requirement or input
 combination it cannot honor and must not silently drop, approximate, reorder,
 download, or transcode it. Provider-only controls belong on adapter APIs.
+
+Crystal.Generation.Operations owns the opaque ticket, portable remote status,
+and typed state snapshot shared by the three operation client interfaces. Start
+accepts an existing target-specific request; poll accepts the latest ticket.
+Both return one snapshot and do not start an automatic poll loop. A snapshot
+contains the exact complete response only when status is Completed. Pending,
+Running, Failed, and Canceled contain no response. An adapter may rotate the
+ticket on any snapshot. A compatible configured adapter must recognize its
+format, preserve its bytes, and report unsupported or expired tickets as
+failures rather than silently starting another job. Crystal never decodes,
+persists, logs, or refreshes tickets. The caller decides poll timing, retention,
+and external storage. Local cancellation stops cooperative waiting; after a
+remote operation is accepted, it does not mean remote cancellation. Remote
+failure status and transport or adapter exceptions are distinct.
+
+Crystal.Generation.Batches owns the non-empty ordered request batch, terminal
+per-item result, and completed batch response. Each target-output namespace
+defines a separate optional batch client whose StartBatchAsync and
+PollBatchAsync return operation snapshots. A completed batch response has exactly
+one item at each original request index; each item is Completed with its exact
+target-specific response, Failed, or Canceled. Whole-batch failure may instead
+appear as an outer Failed operation status. Batch clients do not decompose a
+batch into immediate calls or create a fallback job on poll. A batch-capable
+adapter decides and validates provider-specific size and combination limits.
+
+Crystal.Generation.Streaming owns typed provisional media events and a final
+response event. Each target-output namespace defines an independent optional
+stream client. A complete preview carries one image, audio, or video content
+value. An encoded chunk carries copied bytes, exact MIME, media modality,
+candidate and item indexes, revision index, contiguous chunk index, and a marker
+for a complete provisional encoded revision. For one candidate/item/revision,
+an adapter uses either one complete preview or a zero-based contiguous chunk
+sequence ending with one final chunk; it does not mix the two representations.
+Events for different candidates and items may interleave while preserving order
+within each revision. Later revisions supersede earlier provisional versions.
+A successful stream ends with exactly one GenerationStreamCompleted event holding
+the exact authoritative response; no event follows it. If the adapter fails or
+enumeration is canceled, it does not synthesize completion. Crystal does not
+assemble chunks into the final response, infer metadata from them, or persist
+provisional media.
+
+### Crystal.Realtime
+
+Owns a separate provider-neutral duplex media session contract. An
+IRealtimeMediaClient advertises coarse individual input and output content
+shapes and opens a session from exact caller-owned requirements: non-empty
+output modalities, automatic or explicit turn mode, optional ordered initial
+context, caller-authored tool definitions, and optional reasoning hints. The
+adapter rejects unsupported combinations and maps provider controls itself.
+
+One IRealtimeMediaSession accepts serialized SendAsync calls while exactly one
+ReceiveAsync enumeration may overlap them. RealtimeInputContent carries a
+complete typed text or independently decodable media segment, with optional
+non-negative media offset. RealtimeInputTurnEnded is valid for explicit turn
+mode. Tool results use the exact correlated MultimodalToolResult value.
+Output content events preserve exact typed segments with stable output ID and
+zero-based per-output segment indexes; interleaved outputs retain event order.
+An output completion event closes that output ID, not the whole session, and
+preserves an optional exact reported finish reason.
+Separate output events preserve exact model tool calls and reasoning blocks.
+No Crystal code inserts language, chooses activity thresholds, executes tools,
+collects a transcript, or interprets media. CloseAsync ends local session work
+and releases resources. Caller cancellation stops cooperative local operations;
+it does not assert remote job cancellation. The contract has no reconnect,
+checkpoint, or session-resumption mechanism; adapters and callers own those
+concerns outside Crystal.
 
 ### Crystal.Embeddings
 
@@ -382,9 +484,9 @@ retains a finite per-Agent request. Only finite shared call capacity is reserved
 and returned. Caller and session cancellation continue to propagate when
 duration is unlimited.
 
-No model output automatically routes to another Agent. Callers build routers,
-graphs, supervisors, handoffs, or peer topologies around the explicit invocation
-boundary.
+No model output automatically routes to another Agent. Callers can place
+explicit Agent invocations in Crystal.Workflows nodes or build other routers,
+supervisors, handoffs, and peer topologies around the Harness boundary.
 
 Harness sessions are in-memory execution boundaries. The caller owns durable
 conversation history, session storage, and restoration across process lifetimes.
@@ -440,9 +542,10 @@ cancellation stops enumeration and propagates to in-flight model, policy, and
 tool operations.
 
 Multimodal Chat streaming describes the delivery of typed Chat content; it does
-not imply a generic media-byte stream. Generated-media previews, byte chunks,
-resumable remote operations, and realtime sessions require separate future
-contracts with portable lifecycle semantics.
+not imply a generic media-byte stream. Generated-media previews and byte chunks
+use separate generation stream clients. Realtime sessions use a separate duplex
+contract. Remote generation operations use start and poll interfaces, not Chat
+streams.
 
 ## Safety and disclosure
 
@@ -472,15 +575,16 @@ The current media architecture is additive:
 - capability profiles are intentionally coarse and never claim to encode every
   provider model constraint.
 
-Immediate single-request generation, batch submission, generated-media
-streaming, resumable remote operations, and realtime sessions are distinct
-lifecycles. Only immediate single-request generation is in
-the current production contract. Local cancellation cancels waiting and
-in-flight cooperative work; it must not be documented as remote-job cancellation
-when an adapter has already submitted a persistent provider operation.
+Immediate single-request generation, resumable remote operations, batch
+submission, generated-media streaming, and realtime sessions are distinct
+lifecycles. All five have separate current production contracts. Local
+cancellation cancels waiting and in-flight cooperative work; it must not be
+documented as remote-job cancellation when an adapter has already submitted a
+persistent provider operation.
 
-No production type is a placeholder media abstraction, generic option bag,
-provider resource handle, or universal edit mode.
+No production type is a placeholder media abstraction, generic option bag, or
+universal edit mode. The operation ticket is an opaque adapter-owned continuation
+value, not a Crystal-interpreted provider resource handle.
 
 ## Dependency and serialization boundary
 

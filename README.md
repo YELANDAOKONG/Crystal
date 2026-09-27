@@ -2,8 +2,8 @@
 
 Crystal is a provider-neutral C# library for text and multimodal model access,
 image, audio, and video generation, tool execution, Agents with optional limits,
-explicit Agent Harness composition, and generic asynchronous operation
-pipelines.
+explicit Agent Harness composition, generic asynchronous operation pipelines,
+and typed workflow graphs.
 
 Text and multimodal Chat, Tool, Agent, and Harness APIs are independent. Existing
 text interfaces remain unchanged and text-only.
@@ -18,10 +18,14 @@ text interfaces remain unchanged and text-only.
 - Explicit media ownership, MIME types, and typed modality capabilities.
 - Independent optional multimodal Embedding over ordered typed content inputs.
 - Independent target-output image, audio, and video generation clients.
+- Separate live duplex media session contracts with exact segments and tool
+  correlation.
 - Explicit candidate, tool, approval, limit, and composition policies.
 - Immutable public data contracts.
 - Caller-owned ordered middleware for typed operations and event streams.
 - Opt-in caller-decided retries for complete asynchronous operations.
+- Caller-defined typed workflow edges, conditions, bounded parallel steps,
+  ordered routing events, and explicit step-limit stops.
 - Caller-owned conversation storage and reconstruction across invocations.
 - Exact text Agent forwarding of provider Chat stream events when available.
 
@@ -29,8 +33,10 @@ text interfaces remain unchanged and text-only.
 
 Crystal targets net10.0 and has no compatibility baseline yet. The current
 repository implements the text foundation, optional typed multimodal Chat
-streaming, multimodal Embedding, the immediate-generation scope, and an independent operation
-pipeline library. The current quality checks are:
+streaming, multimodal Embedding, independent immediate, streaming, remote
+operation and batch generation, live media session contracts, an operation
+pipeline library, and a typed workflow graph runtime. The current
+quality checks are:
 
 ~~~bash
 dotnet build Crystal.sln
@@ -104,6 +110,54 @@ count. Adapters still own the correspondence and order of returned vectors.
 reject an undeclared multimodal Embedding modality or media source kind before
 calling the client. It does not validate model-specific combinations or read
 media.
+
+### Workflow graphs
+
+`Crystal.Workflows` runs caller-defined operations connected by type-matched
+edges. A node can call an Agent, a tool, or ordinary application code without
+the graph runtime knowing that implementation. Conditions route each exact
+output value. Nodes reached in the same superstep receive one ordered batch;
+concurrent node calls still route results in graph order.
+
+~~~csharp
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
+using Crystal.Workflows;
+
+namespace Example;
+
+public static class WorkflowExample
+{
+    public static async Task<IReadOnlyList<int>> RunAsync(
+        CancellationToken cancellationToken)
+    {
+        var start = new WorkflowNode<int, int>(
+            "start",
+            (inputs, _) => Task.FromResult(inputs));
+        var doubled = new WorkflowNode<int, int>(
+            "doubled",
+            (inputs, _) => Task.FromResult<IReadOnlyList<int>>(
+                inputs.Select(static value => value * 2).ToArray()));
+        var workflow = new WorkflowBuilder<int, int>(start)
+            .AddEdge(start, doubled)
+            .Build(doubled);
+        var result = await workflow.RunAsync(
+            new WorkflowRunRequest<int>(Guid.NewGuid(), [1, 2]),
+            cancellationToken);
+
+        return result.Outputs;
+    }
+}
+~~~
+
+The result contains `[2, 4]`. `WorkflowLimits` can set a finite superstep
+limit and bounded node concurrency. `StreamAsync` reports ordered node and route
+metadata followed by the exact result. The graph owns no durable state or
+human-interaction protocol.
 
 ## Using Crystal
 
@@ -477,8 +531,30 @@ A provider package implements only the capabilities it can preserve:
 - IMultimodalChatClient and optionally IStreamingMultimodalChatClient, with
   explicit input and output capabilities;
 - IImageGenerationClient for immediate image generation;
-- IAudioGenerationClient for immediate audio generation; and
-- IVideoGenerationClient for immediate video generation.
+- IAudioGenerationClient for immediate audio generation;
+- IVideoGenerationClient for immediate video generation; and
+- IRealtimeMediaClient for live duplex text and typed media segments.
+
+Optional `IImageGenerationOperationClient`,
+`IAudioGenerationOperationClient`, and `IVideoGenerationOperationClient`
+support remote operations. `StartAsync` and `PollAsync` each return a
+`GenerationOperationSnapshot<TResponse>`. Callers retain its latest opaque
+`GenerationOperationTicket`, choose when to poll, and provide their own storage
+if the ticket must outlive the process. Only a Completed snapshot contains a
+generation response. Local cancellation does not cancel an accepted remote job.
+
+Optional `IImageGenerationBatchClient`, `IAudioGenerationBatchClient`, and
+`IVideoGenerationBatchClient` submit an ordered batch as one remote operation.
+When complete, the batch response has one terminal item at each input index,
+including failed or canceled items. Crystal does not split a batch into
+individual calls.
+
+Optional `IStreamingImageGenerationClient`,
+`IStreamingAudioGenerationClient`, and `IStreamingVideoGenerationClient`
+deliver complete provisional previews or copied encoded chunks with explicit
+candidate, item, and revision indexes. A successful stream ends with one event
+containing the authoritative complete response. Preview revisions can change;
+the final response decides the result.
 
 Provider configuration, model identifiers, wire options, DTOs, and exceptions
 stay in that external package.
@@ -490,12 +566,12 @@ the transcript contains only caller input, selected model output, and exact
 caller-owned tool output. Limits and errors stop the run or throw; they do not
 become hidden messages.
 
-## Deferred media lifecycles
+## Media lifecycle boundaries
 
 The current media scope includes non-streaming and optional typed streaming
-multimodal Chat plus immediate single-request image, audio, and video generation.
-Batch submission, generated-media previews or chunks, resumable long-running
-remote operations, explicit remote cancellation, and stateful realtime
-audio/video sessions require separate future contracts. They will not
-be added as modes on the immediate generation clients or as a generic attachment
-bag.
+multimodal Chat plus immediate, streaming, resumable-operation, and batch image,
+audio, and video generation. The current live session contract handles duplex
+text and typed media segments, tool correlation, and explicit boundaries.
+Remote cancellation and connection resumption remain adapter and caller
+concerns. These contracts are separate from immediate generation and do not use
+a generic attachment bag.

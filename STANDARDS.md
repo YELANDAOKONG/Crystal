@@ -38,6 +38,8 @@
 - Crystal.Decorators references only Crystal and Crystal.Pipelines. It
   preserves each wrapped client's optional streaming interface and capability
   profile; unsupported streaming middleware is rejected.
+- Crystal.Workflows has no project references. Its typed graph routes only exact
+  caller-owned node output, never synthesized model-visible content.
 - Production project references are one-way and contain no cycle.
 - Text and multimodal model-facing tool protocol values remain in Crystal even
   though executable tool infrastructure belongs to Crystal.Tools.
@@ -167,6 +169,25 @@ Tests must prove:
   contracts. Editing is expressed through typed source and mask inputs.
 - Immediate single-request, batch, streaming, resumable-operation, and realtime
   APIs remain separate.
+- Remote operation tickets copy opaque bytes and reveal neither those bytes nor
+  remote identifiers in ToString. A returned ticket supersedes the previous
+  ticket; the caller owns retention and storage. A completed operation alone
+  carries a complete generation response. Local cancellation has no implied
+  remote-cancel semantics.
+- Batch requests are non-empty ordered snapshots. A completed batch response
+  has one terminal item per request in input order; one item failure does not
+  cause Crystal to discard other results. A batch adapter never silently
+  decomposes submission into repeated immediate calls.
+- Generated-media stream events distinguish complete provisional previews from
+  encoded byte chunks. Chunk data is copied. Revisions and zero-based indexes
+  preserve ordering; a final chunk completes only its provisional revision.
+  Exactly one completed event ends a successful stream with the authoritative
+  target-specific response. Error and cancellation do not synthesize success.
+- A realtime session has one receive enumeration and caller-serialized sends,
+  which may overlap. Every input segment is complete typed content; output
+  segments retain stable output IDs and zero-based indexes. Tool calls and
+  results retain their exact correlation IDs. Crystal neither reconnects nor
+  stores the session transcript.
 - Generated output preserves item and candidate order. Embedded video audio and a
   separate generated audio item are not interchangeable.
 - Do not add a generic attachment, provider-option, billing-usage, or metadata
@@ -231,6 +252,24 @@ Tests must prove:
 - Session history storage, process-spanning recovery, and checkpointing belong
   to the consuming application. A new process receives caller-reconstructed
   inputs; Crystal does not restore a prior session.
+
+## Workflow execution
+
+- Graph construction validates unique names, a sole terminal sink, and paths
+  from start through every registered node to terminal.
+- Type-matched edges evaluate caller conditions in registration order for each
+  output message. Passing an edge preserves the same message object.
+- Concurrent node calls are bounded by the configured maximum. Completed
+  outputs and route events use graph node, output, and edge order, independent
+  of task completion order.
+- Same-superstep messages to one node form one ordered input batch. Later
+  arrivals may invoke that node again; there is no implicit cross-step barrier.
+- A finite superstep limit stops before executing the next step, while null is
+  unlimited. Caller cancellation is never reported as normal completion.
+- Failed steps and route conditions fail the run without synthesized output or
+  rollback of already-started side effects. Stream disposal stops later work.
+- Workflow events carry metadata rather than input or output payloads except
+  for the explicit terminal result. No persistence or recovery is performed.
 
 ## Pipeline execution
 

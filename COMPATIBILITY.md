@@ -3,8 +3,8 @@
 ## Purpose
 
 Crystal ships no provider implementation. This document records the portable
-semantics an external adapter must preserve across current text, multimodal, and
-immediate-generation protocols.
+semantics an external adapter must preserve across current text, multimodal,
+generation, and realtime protocols.
 The compatibility target is provider behavior and portable data semantics;
 Crystal does not implement API compatibility or migration for another .NET
 library.
@@ -19,7 +19,8 @@ Crystal.Agents, or Crystal.Harness.
 The text and reasoning evidence was reviewed against official provider
 documentation on 2026-08-23, with model-dependent effort controls checked on
 2026-09-27. Multimodal and generation evidence was reviewed on 2026-08-30,
-with multimodal Chat streaming reviewed on 2026-09-22.
+with multimodal Chat streaming reviewed on 2026-09-22 and remote operation and
+realtime lifecycle evidence checked on 2026-09-27.
 
 ## Common capability rule
 
@@ -119,8 +120,13 @@ lifecycles separate:
   distinguishes partial preview images from final generated images.
 - [Google Gemini Live](https://ai.google.dev/api/live) defines a stateful realtime
   session rather than an ordinary request/response operation.
+- [Gemini Live capabilities](https://ai.google.dev/gemini-api/docs/live-api/capabilities)
+  document bidirectional text, audio, and video segments, automatic or explicit
+  activity boundaries, and tool responses.
 - [Vertex AI video generation](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/video/generate-videos-from-first-and-last-frames)
   uses long-running operations for video generation.
+- [Google Veo generation](https://ai.google.dev/gemini-api/docs/veo) describes
+  submission and later polling of a long-running operation.
 
 These contracts are evidence for portable semantics, not provider types or model
 identifiers in Crystal.
@@ -247,6 +253,74 @@ content arrives as complete indexed content blocks.
   previews, resumable remote handles, remote cancellation, and realtime sessions
   are not represented by the immediate interfaces. CancellationToken cancels
   local cooperative work; it does not imply cancellation of an already submitted persistent provider job.
+
+## Remote generation operation compatibility
+
+- An adapter may implement an image, audio, or video operation client only when
+  it can submit a request and subsequently poll its status using a returned
+  ticket. Implementing an immediate client does not imply operation support.
+- The ticket's format and bytes are adapter-owned. A poll may return a new
+  ticket, which supersedes the prior one. The caller may retain and resupply it
+  to a compatible adapter instance; Crystal provides no ticket store.
+- The adapter maps remote state to Pending, Running, Completed, Failed, or
+  Canceled without inventing a completed response. Completed includes the
+  same exact ordered target-specific response shape as immediate generation;
+  other states carry no response.
+- An unrecognized or expired ticket is an adapter failure. Poll must not
+  submit a new operation as a fallback. A remote Failed state is distinct from
+  a transport or adapter exception.
+- CancellationToken stops local cooperative waiting. After acceptance, it
+  does not assert remote cancellation. Remote cancellation, poll timing, and
+  retries remain outside the portable operation interfaces.
+
+## Generation batch compatibility
+
+- Optional image, audio, and video batch clients submit an ordered non-empty
+  set of exact target-specific requests as one remote operation. Adapters reject
+  unsupported batch sizes or combinations; they do not silently fan out calls
+  through immediate clients.
+- A completed batch response returns exactly one terminal item for each input
+  in input order. Completed items contain exact generation responses; Failed
+  and Canceled items contain none. An entire remote batch can instead end with
+  an outer Failed or Canceled status.
+- Batch start and poll use the same opaque-ticket and local-cancellation
+  semantics as single remote generation operations. Poll never submits a new
+  batch as a fallback.
+
+## Generated-media stream compatibility
+
+- Optional image, audio, and video stream clients are independent from their
+  immediate and remote-operation clients. Adapters implement only the stream
+  modes they can honor.
+- Complete previews contain a typed image, audio, or video value. Encoded chunks
+  preserve exact bytes, MIME, modality, and candidate/item/revision indexes. A
+  single revision uses one complete preview or contiguous chunks beginning at
+  index zero and ending with one final chunk. Different items may interleave.
+- A completed chunk revision is provisional. Later revisions supersede it; the
+  complete generation response in the stream's single terminal event is
+  authoritative and preserves candidate and item order.
+- A failed or canceled enumeration has no completed event. CancellationToken
+  applies to enumeration and cooperative provider work; it does not imply
+  remote cancellation of an accepted persistent job.
+
+## Realtime media session compatibility
+
+- A realtime adapter implements IRealtimeMediaClient only if it can open a live
+  bidirectional session. It advertises individual input/output shapes and
+  supported turn modes; unsupported output modalities, initial context, tools,
+  reasoning hints, or combinations fail at OpenAsync.
+- SendAsync preserves caller input order and exact typed text or independently
+  decodable media segments. An explicit end-of-turn event is used only in an
+  explicit turn-mode session. The caller serializes sends; receiving may
+  overlap. No adapter invents prompts or transcript text.
+- ReceiveAsync forwards exact output segments in observed order. Output IDs
+  remain stable within a session, segment indexes start at zero per output and
+  remain ordered, and completion closes that output with its exact reported
+  finish reason when available. Tool-call and tool-result IDs are preserved
+  exactly. Reasoning values are not rewritten.
+- CloseAsync releases local resources. Cancellation stops local cooperative
+  work; Crystal provides no session store, reconnection, or provider-specific
+  resumption token. These remain external adapter and caller concerns.
 
 ## Tool protocol compatibility
 

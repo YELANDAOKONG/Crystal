@@ -23,6 +23,7 @@
     <ProjectReference Include="../Crystal.Decorators/Crystal.Decorators.csproj" />
     <ProjectReference Include="../Crystal.Harness/Crystal.Harness.csproj" />
     <ProjectReference Include="../Crystal.Pipelines/Crystal.Pipelines.csproj" />
+    <ProjectReference Include="../Crystal.Workflows/Crystal.Workflows.csproj" />
   </ItemGroup>
 
 </Project>
