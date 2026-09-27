@@ -94,15 +94,25 @@ partial-output semantics and are not included.
 ### Crystal.Decorators
 
 Owns typed adapters that apply generic middleware to provider-neutral Chat,
-Completion, Embedding, multimodal Chat and Embedding, and immediate image, audio, and video
-generation clients. It references Crystal and Crystal.Pipelines, without a
-dependency on executable Tools, Agents, or Harnesses. Wrapping preserves the
-client's declared capability object and optional streaming interface. Supplying
-stream middleware to a client without streaming support fails at construction.
+Completion, Embedding, multimodal Chat and Embedding, immediate image, audio,
+and video generation, and realtime session opening. Separate typed adapters
+wrap streaming, remote-operation, and batch generation clients without
+requiring an immediate client. It references Crystal and Crystal.Pipelines
+without a dependency on executable Tools, Agents, or Harnesses. Wrapping
+preserves the client's declared capability object. Chat wrappers preserve an optional
+streaming interface; supplying stream middleware to a Chat client without
+streaming support fails at construction.
 The adapters forward exact requests, responses, events, and cancellation tokens
 unless caller-supplied middleware explicitly changes them. The public `Clients`
 entry point selects the wrapper for each client family.
-Internal adapters are grouped by Chat, Completions, Embeddings, and Generation.
+Remote-operation and batch wrappers have independent start and poll pipelines.
+They forward the caller's exact ticket and each returned snapshot; they neither
+retain a ticket nor choose when to poll.
+The realtime media client wrapper applies middleware only to OpenAsync and
+returns the exact live session. It does not wrap SendAsync, ReceiveAsync, or
+CloseAsync, or manage the session lifecycle.
+Internal adapters are grouped by Chat, Completions, Embeddings, Generation,
+and Realtime.
 The public `Clients` and `EmbeddingValidation` entry points retain the
 `Crystal.Decorators` namespace; the internal folder namespaces are not public
 API.

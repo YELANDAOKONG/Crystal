@@ -4,13 +4,18 @@ using Crystal.Decorators.Chat;
 using Crystal.Decorators.Completions;
 using Crystal.Decorators.Embeddings;
 using Crystal.Decorators.Generation;
+using Crystal.Decorators.Realtime;
 using Crystal.Embeddings;
 using Crystal.Generation.Audio;
+using Crystal.Generation.Batches;
 using Crystal.Generation.Images;
+using Crystal.Generation.Operations;
+using Crystal.Generation.Streaming;
 using Crystal.Generation.Video;
 using Crystal.Multimodal.Chat;
 using Crystal.Multimodal.Embeddings;
 using Crystal.Pipelines;
+using Crystal.Realtime;
 
 namespace Crystal.Decorators;
 
@@ -134,6 +139,136 @@ public static class Clients
         IVideoGenerationClient client,
         IEnumerable<AsyncMiddleware<VideoGenerationRequest, VideoGenerationResponse>> middleware) =>
         new VideoGenerationClientAdapter(client, middleware);
+
+    /// <summary>Wraps image-generation streaming without changing capabilities.</summary>
+    /// <param name="client">The configured image-generation stream client.</param>
+    /// <param name="middleware">Ordered stream middleware.</param>
+    /// <returns>The wrapped image-generation stream client.</returns>
+    public static IStreamingImageGenerationClient ForStreamingImageGeneration(
+        IStreamingImageGenerationClient client,
+        IEnumerable<StreamingMiddleware<ImageGenerationRequest,
+            GenerationStreamEvent<ImageGenerationResponse>>> middleware) =>
+        new StreamingImageGenerationClientAdapter(client, middleware);
+
+    /// <summary>Wraps audio-generation streaming without changing capabilities.</summary>
+    /// <param name="client">The configured audio-generation stream client.</param>
+    /// <param name="middleware">Ordered stream middleware.</param>
+    /// <returns>The wrapped audio-generation stream client.</returns>
+    public static IStreamingAudioGenerationClient ForStreamingAudioGeneration(
+        IStreamingAudioGenerationClient client,
+        IEnumerable<StreamingMiddleware<AudioGenerationRequest,
+            GenerationStreamEvent<AudioGenerationResponse>>> middleware) =>
+        new StreamingAudioGenerationClientAdapter(client, middleware);
+
+    /// <summary>Wraps video-generation streaming without changing capabilities.</summary>
+    /// <param name="client">The configured video-generation stream client.</param>
+    /// <param name="middleware">Ordered stream middleware.</param>
+    /// <returns>The wrapped video-generation stream client.</returns>
+    public static IStreamingVideoGenerationClient ForStreamingVideoGeneration(
+        IStreamingVideoGenerationClient client,
+        IEnumerable<StreamingMiddleware<VideoGenerationRequest,
+            GenerationStreamEvent<VideoGenerationResponse>>> middleware) =>
+        new StreamingVideoGenerationClientAdapter(client, middleware);
+
+    /// <summary>Wraps image-generation operation start and poll separately.</summary>
+    /// <param name="client">The configured image-generation operation client.</param>
+    /// <param name="startMiddleware">Ordered submission middleware.</param>
+    /// <param name="pollMiddleware">Ordered polling middleware.</param>
+    /// <returns>The wrapped operation client.</returns>
+    public static IImageGenerationOperationClient ForImageGenerationOperation(
+        IImageGenerationOperationClient client,
+        IEnumerable<AsyncMiddleware<ImageGenerationRequest,
+            GenerationOperationSnapshot<ImageGenerationResponse>>> startMiddleware,
+        IEnumerable<AsyncMiddleware<GenerationOperationTicket,
+            GenerationOperationSnapshot<ImageGenerationResponse>>> pollMiddleware) =>
+        new ImageGenerationOperationClientAdapter(
+            client, startMiddleware, pollMiddleware);
+
+    /// <summary>Wraps audio-generation operation start and poll separately.</summary>
+    /// <param name="client">The configured audio-generation operation client.</param>
+    /// <param name="startMiddleware">Ordered submission middleware.</param>
+    /// <param name="pollMiddleware">Ordered polling middleware.</param>
+    /// <returns>The wrapped operation client.</returns>
+    public static IAudioGenerationOperationClient ForAudioGenerationOperation(
+        IAudioGenerationOperationClient client,
+        IEnumerable<AsyncMiddleware<AudioGenerationRequest,
+            GenerationOperationSnapshot<AudioGenerationResponse>>> startMiddleware,
+        IEnumerable<AsyncMiddleware<GenerationOperationTicket,
+            GenerationOperationSnapshot<AudioGenerationResponse>>> pollMiddleware) =>
+        new AudioGenerationOperationClientAdapter(
+            client, startMiddleware, pollMiddleware);
+
+    /// <summary>Wraps video-generation operation start and poll separately.</summary>
+    /// <param name="client">The configured video-generation operation client.</param>
+    /// <param name="startMiddleware">Ordered submission middleware.</param>
+    /// <param name="pollMiddleware">Ordered polling middleware.</param>
+    /// <returns>The wrapped operation client.</returns>
+    public static IVideoGenerationOperationClient ForVideoGenerationOperation(
+        IVideoGenerationOperationClient client,
+        IEnumerable<AsyncMiddleware<VideoGenerationRequest,
+            GenerationOperationSnapshot<VideoGenerationResponse>>> startMiddleware,
+        IEnumerable<AsyncMiddleware<GenerationOperationTicket,
+            GenerationOperationSnapshot<VideoGenerationResponse>>> pollMiddleware) =>
+        new VideoGenerationOperationClientAdapter(
+            client, startMiddleware, pollMiddleware);
+
+    /// <summary>Wraps image-generation batch submission and polling separately.</summary>
+    /// <param name="client">The configured image-generation batch client.</param>
+    /// <param name="startMiddleware">Ordered batch submission middleware.</param>
+    /// <param name="pollMiddleware">Ordered batch polling middleware.</param>
+    /// <returns>The wrapped batch client.</returns>
+    public static IImageGenerationBatchClient ForImageGenerationBatch(
+        IImageGenerationBatchClient client,
+        IEnumerable<AsyncMiddleware<GenerationBatchRequest<ImageGenerationRequest>,
+            GenerationOperationSnapshot<GenerationBatchResponse<ImageGenerationResponse>>>>
+            startMiddleware,
+        IEnumerable<AsyncMiddleware<GenerationOperationTicket,
+            GenerationOperationSnapshot<GenerationBatchResponse<ImageGenerationResponse>>>>
+            pollMiddleware) =>
+        new ImageGenerationBatchClientAdapter(
+            client, startMiddleware, pollMiddleware);
+
+    /// <summary>Wraps audio-generation batch submission and polling separately.</summary>
+    /// <param name="client">The configured audio-generation batch client.</param>
+    /// <param name="startMiddleware">Ordered batch submission middleware.</param>
+    /// <param name="pollMiddleware">Ordered batch polling middleware.</param>
+    /// <returns>The wrapped batch client.</returns>
+    public static IAudioGenerationBatchClient ForAudioGenerationBatch(
+        IAudioGenerationBatchClient client,
+        IEnumerable<AsyncMiddleware<GenerationBatchRequest<AudioGenerationRequest>,
+            GenerationOperationSnapshot<GenerationBatchResponse<AudioGenerationResponse>>>>
+            startMiddleware,
+        IEnumerable<AsyncMiddleware<GenerationOperationTicket,
+            GenerationOperationSnapshot<GenerationBatchResponse<AudioGenerationResponse>>>>
+            pollMiddleware) =>
+        new AudioGenerationBatchClientAdapter(
+            client, startMiddleware, pollMiddleware);
+
+    /// <summary>Wraps video-generation batch submission and polling separately.</summary>
+    /// <param name="client">The configured video-generation batch client.</param>
+    /// <param name="startMiddleware">Ordered batch submission middleware.</param>
+    /// <param name="pollMiddleware">Ordered batch polling middleware.</param>
+    /// <returns>The wrapped batch client.</returns>
+    public static IVideoGenerationBatchClient ForVideoGenerationBatch(
+        IVideoGenerationBatchClient client,
+        IEnumerable<AsyncMiddleware<GenerationBatchRequest<VideoGenerationRequest>,
+            GenerationOperationSnapshot<GenerationBatchResponse<VideoGenerationResponse>>>>
+            startMiddleware,
+        IEnumerable<AsyncMiddleware<GenerationOperationTicket,
+            GenerationOperationSnapshot<GenerationBatchResponse<VideoGenerationResponse>>>>
+            pollMiddleware) =>
+        new VideoGenerationBatchClientAdapter(
+            client, startMiddleware, pollMiddleware);
+
+    /// <summary>Wraps only live-session opening and preserves capabilities.</summary>
+    /// <param name="client">The configured realtime media client.</param>
+    /// <param name="middleware">Ordered session-opening middleware.</param>
+    /// <returns>The wrapped realtime media client.</returns>
+    public static IRealtimeMediaClient ForRealtimeMedia(
+        IRealtimeMediaClient client,
+        IEnumerable<AsyncMiddleware<RealtimeSessionRequest,
+            IRealtimeMediaSession>> middleware) =>
+        new RealtimeMediaClientAdapter(client, middleware);
 
     private static void RequireNoStreamingMiddleware<TRequest, TEvent>(
         IReadOnlyList<StreamingMiddleware<TRequest, TEvent>> middleware,

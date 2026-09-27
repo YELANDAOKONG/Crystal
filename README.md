@@ -543,11 +543,20 @@ support remote operations. `StartAsync` and `PollAsync` each return a
 if the ticket must outlive the process. Only a Completed snapshot contains a
 generation response. Local cancellation does not cancel an accepted remote job.
 
+`Clients.ForImageGenerationOperation`, `ForAudioGenerationOperation`, and
+`ForVideoGenerationOperation` wrap their independent client interfaces with
+separate start and poll middleware; the caller still retains each ticket and
+controls polling.
+
 Optional `IImageGenerationBatchClient`, `IAudioGenerationBatchClient`, and
 `IVideoGenerationBatchClient` submit an ordered batch as one remote operation.
 When complete, the batch response has one terminal item at each input index,
 including failed or canceled items. Crystal does not split a batch into
 individual calls.
+
+`Clients.ForImageGenerationBatch`, `ForAudioGenerationBatch`, and
+`ForVideoGenerationBatch` likewise compose separate submission and polling
+middleware without saving a ticket or batch.
 
 `GenerationBatchValidation.RequireSubmittedCardinality<TRequest, TResponse>()`
 can check an immediately completed submission in an `AsyncPipeline`. For a
@@ -562,17 +571,25 @@ candidate, item, and revision indexes. A successful stream ends with one event
 containing the authoritative complete response. Preview revisions can change;
 the final response decides the result.
 
+`Clients.ForStreamingImageGeneration`, `ForStreamingAudioGeneration`, and
+`ForStreamingVideoGeneration` compose stream middleware while retaining each
+independent client interface and its declared capabilities.
+
 `GenerationStreamValidation.RequireProtocol<TRequest, TResponse>()` can be
-added to a `StreamingPipeline` to reject out-of-order or incomplete provisional
-media and missing or repeated completion. It forwards valid events unchanged
-and does not assemble bytes into the final response.
+added to one of these wrappers or a `StreamingPipeline` to reject out-of-order
+or incomplete provisional media and missing or repeated completion. It forwards
+valid events unchanged and does not assemble bytes into the final response.
 
 `RealtimeOutputValidation.ValidateAsync(session.ReceiveAsync(token), token)`
 optionally checks each live output's segment order and completion boundary. It
 forwards the same events and does not reconnect or store the session.
+
 `RealtimeSessionValidation.RequireDeclaredCapabilities(client.Capabilities)`
 can preflight individually advertised session settings in an `AsyncPipeline`
 around `OpenAsync`; the adapter still checks model-specific combinations.
+
+`Clients.ForRealtimeMedia` can compose that middleware while preserving the
+declared capabilities and returning the exact live session.
 
 Provider configuration, model identifiers, wire options, DTOs, and exceptions
 stay in that external package.

@@ -36,8 +36,13 @@
 - Crystal.Pipelines has no project references and remains usable for any typed
   asynchronous request/response or event stream.
 - Crystal.Decorators references only Crystal and Crystal.Pipelines. It
-  preserves each wrapped client's optional streaming interface and capability
-  profile; unsupported streaming middleware is rejected.
+  preserves a wrapped client's capability profile. Chat wrappers preserve an
+  optional streaming interface and reject unsupported streaming middleware.
+  Streaming, operation, and batch generation wrappers retain their independent
+  interfaces. Operation and batch start and poll calls have separate pipelines;
+  wrappers never retain operation tickets or schedule polling.
+- A realtime media client wrapper applies middleware only when opening a
+  session; the returned live session remains adapter-owned and unchanged.
 - Crystal.Workflows has no project references. Its typed graph routes only exact
   caller-owned node output, never synthesized model-visible content.
 - Production project references are one-way and contain no cycle.

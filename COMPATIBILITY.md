@@ -272,6 +272,10 @@ content arrives as complete indexed content blocks.
 - CancellationToken stops local cooperative waiting. After acceptance, it
   does not assert remote cancellation. Remote cancellation, poll timing, and
   retries remain outside the portable operation interfaces.
+- Typed Crystal.Decorators operation wrappers compose separate caller-owned
+  middleware for StartAsync and PollAsync. They preserve exact requests,
+  tickets, snapshots, and cancellation tokens unless middleware changes them.
+  They retain no ticket or polling schedule.
 
 ## Generation batch compatibility
 
@@ -286,6 +290,8 @@ content arrives as complete indexed content blocks.
 - Batch start and poll use the same opaque-ticket and local-cancellation
   semantics as single remote generation operations. Poll never submits a new
   batch as a fallback.
+- Typed Crystal.Decorators batch wrappers compose separate submission and poll
+  middleware without retaining a ticket or submitted request collection.
 - Consumers may opt into GenerationBatchValidation at submission or polling to
   reject a completed response with an unexpected input count. Poll validation
   requires the caller-retained submitted count and stores no operation state.
@@ -305,6 +311,10 @@ content arrives as complete indexed content blocks.
 - A failed or canceled enumeration has no completed event. CancellationToken
   applies to enumeration and cooperative provider work; it does not imply
   remote cancellation of an accepted persistent job.
+- The independent streaming generation clients can be wrapped by typed
+  Crystal.Decorators clients. Wrappers preserve the exact declared capability
+  object, request, cancellation token, and event stream unless caller-owned
+  middleware explicitly changes them.
 - Consumers may opt into GenerationStreamValidation middleware to reject
   malformed revision and chunk order or a missing, repeated, or nonterminal
   completion event. This validation forwards exact events and does not repair
@@ -334,6 +344,9 @@ content arrives as complete indexed content blocks.
 - RealtimeSessionValidation can reject individually undeclared output
   modalities, turn mode, tools, or reasoning before OpenAsync. Adapters still
   reject unsupported combinations, initial context, and live input shapes.
+- The optional typed realtime client wrapper applies caller-owned middleware
+  to OpenAsync only. It returns the adapter's exact session and does not
+  intercept sends, receives, closure, or connection state.
 
 ## Tool protocol compatibility
 
