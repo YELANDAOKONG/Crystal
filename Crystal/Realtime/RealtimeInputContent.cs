@@ -13,6 +13,11 @@ public sealed record RealtimeInputContent : RealtimeInputEvent
         TimeSpan? mediaOffset = null)
     {
         ArgumentNullException.ThrowIfNull(content);
+        if (content is FileContent)
+        {
+            throw new ArgumentException("A live input segment cannot be a file.", nameof(content));
+        }
+
         if (mediaOffset < TimeSpan.Zero)
         {
             throw new ArgumentOutOfRangeException(nameof(mediaOffset));

@@ -117,6 +117,7 @@ public static class EmbeddingValidation
             ImageContent image => image.Image.Source.Kind,
             AudioContent audio => audio.Audio.Source.Kind,
             VideoContent video => video.Video.Source.Kind,
+            FileContent file => file.File.Source.Kind,
             _ => throw new InvalidOperationException(
                 "The multimodal embedding request contains an unknown content type.")
         };

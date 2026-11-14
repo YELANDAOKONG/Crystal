@@ -14,6 +14,11 @@ public sealed record GenerationInputCapability
     {
         ArgumentNullException.ThrowIfNull(content, nameof(content));
         ArgumentNullException.ThrowIfNull(purpose, nameof(purpose));
+        if (content.Modality == ContentModality.File)
+        {
+            throw new ArgumentException("Generation does not accept file inputs.", nameof(content));
+        }
+
         GenerationInputRules.Validate(content.Modality, purpose, nameof(purpose));
 
         Content = content;

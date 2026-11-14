@@ -10,6 +10,11 @@ public sealed record GenerationContentItem : GenerationItem
     public GenerationContentItem(MultimodalContent content)
     {
         ArgumentNullException.ThrowIfNull(content, nameof(content));
+        if (content is FileContent)
+        {
+            throw new ArgumentException("Generation does not produce file outputs.", nameof(content));
+        }
+
         Content = content;
     }
 

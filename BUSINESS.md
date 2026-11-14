@@ -63,7 +63,7 @@ depending on tool execution, Agent runtime, or Harness composition.
 ### Multimodal Embedding
 
 - An independent optional client; text Embedding remains text-only.
-- Each input contains non-empty ordered typed text, image, audio, or video
+- Each input contains non-empty ordered typed text, image, audio, video, or file
   content, and a request contains a non-empty ordered batch of inputs.
 - Coarse input capabilities advertise individual modalities and media source
   shapes. Adapters reject unsupported requests and return exactly one vector
@@ -99,8 +99,11 @@ depending on tool execution, Agent runtime, or Harness composition.
 
 ### Media and multimodal Chat
 
-- Closed portable text, image, audio, and video content modalities.
+- Closed portable text, image, audio, video, and file content modalities.
 - Explicit MIME types and typed image, audio, and video metadata.
+- Whole files carry an explicit MIME type and an optional caller- or
+  adapter-supplied file name. They use the same source shapes as other media
+  and are first-class ordered content in multimodal Chat, Tool, and Embedding.
 - Immutable inline bytes, caller-owned absolute URIs, and replayable stream
   factories with explicit ownership and optional expiration metadata.
 - Coarse input and output capabilities that include accepted media source shapes.
@@ -315,7 +318,7 @@ a tool is an explicit caller decision.
 
 The current release does not include:
 
-- generic binary attachments, PDFs, or general file-content bags;
+- generic attachment bags, file parsing, and provider file management;
 - automatic URI fetching, media upload, download, transcoding, or caching;
 - built-in providers, authentication, transport, or model catalogs;
 - built-in prompts, personas, templates, repair messages, or summaries;
@@ -333,9 +336,10 @@ Multimodal and media-generation support is additive:
 
 - text-only interfaces remain text-only;
 - multimodal Chat, Tool, Agent, and Harness families are independent;
-- image, audio, and video are typed first-class values rather than attachments;
+- image, audio, video, and file are typed first-class values;
 - generation clients are separated by target output while accepting a shared
-  closed set of typed conditioning inputs;
+  closed set of typed conditioning inputs. Files are outside media generation
+  and the realtime input/output segment protocol;
 - capability profiles state portable individual input and output shapes, while
   adapters validate model-specific combinations and cardinality;
 - provider options remain on adapter APIs rather than in extension dictionaries;

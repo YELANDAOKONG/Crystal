@@ -28,7 +28,11 @@ public sealed class EmbeddingValidationTests
                     new MediaMimeType("image/png"))),
                 new VideoContent(new VideoMedia(
                     replayable,
-                    new MediaMimeType("video/mp4")))
+                    new MediaMimeType("video/mp4"))),
+                new FileContent(new FileMedia(
+                    replayable,
+                    new MediaMimeType("application/pdf"),
+                    "report.pdf"))
             ])
         ]);
         var capabilities = new MultimodalEmbeddingCapabilities(
@@ -39,6 +43,9 @@ public sealed class EmbeddingValidationTests
                 [MediaSourceKind.Inline]),
             new MultimodalContentCapability(
                 ContentModality.Video,
+                [MediaSourceKind.ReplayableStream]),
+            new MultimodalContentCapability(
+                ContentModality.File,
                 [MediaSourceKind.ReplayableStream])
         ]);
         var response = new MultimodalEmbeddingResponse(
@@ -68,6 +75,9 @@ public sealed class EmbeddingValidationTests
                 new MultimodalContentCapability(ContentModality.Text),
                 new MultimodalContentCapability(
                     ContentModality.Image,
+                    [MediaSourceKind.Inline]),
+                new MultimodalContentCapability(
+                    ContentModality.File,
                     [MediaSourceKind.Inline])
             ]);
         var invoked = false;
@@ -91,12 +101,20 @@ public sealed class EmbeddingValidationTests
                     new InlineMediaSource(new byte[] { 1 }),
                     new MediaMimeType("audio/wav")))])]);
 
-        foreach (var request in new[] { wrongSource, wrongModality })
+        var wrongFileSource = new MultimodalEmbeddingRequest(
+            [new MultimodalEmbeddingInput(
+                [new FileContent(new FileMedia(
+                    new UriMediaSource(uri),
+                    new MediaMimeType("application/pdf"),
+                    "private-report.pdf"))])]);
+
+        foreach (var request in new[] { wrongSource, wrongModality, wrongFileSource })
         {
             var failure = await Assert.ThrowsAsync<ArgumentException>(() =>
                 pipeline.InvokeAsync(request));
             Assert.Equal("request", failure.ParamName);
             Assert.DoesNotContain("private-image", failure.Message);
+            Assert.DoesNotContain("private-report.pdf", failure.Message);
         }
 
         Assert.False(invoked);

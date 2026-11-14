@@ -25,12 +25,19 @@ public sealed class MultimodalAgentStreamingTests
         });
         var inputImage = new ImageContent(
             new ImageMedia(inputSource, new MediaMimeType("image/png")));
+        var inputFile = new FileContent(
+            new FileMedia(inputSource, new MediaMimeType("application/pdf")));
         var initial = new MultimodalMessage(
             MultimodalChatRole.User,
-            [new TextContent("question"), inputImage]);
-        var outputSource = new UriMediaSource(new Uri("https://example.invalid/image"));
+            [new TextContent("question"), inputImage, inputFile]);
         var outputImage = new ImageContent(
-            new ImageMedia(outputSource, new MediaMimeType("image/png")));
+            new ImageMedia(
+                new UriMediaSource(new Uri("https://example.invalid/image")),
+                new MediaMimeType("image/png")));
+        var outputFile = new FileContent(new FileMedia(
+            new UriMediaSource(new Uri("https://example.invalid/report")),
+            new MediaMimeType("application/pdf"),
+            "report.pdf"));
         var reasoningState = new OpaqueReasoningState("test", new byte[] { 3, 4 });
         var usage = new TokenUsage(5, 7, 2);
         MultimodalChatStreamEvent[] providerEvents =
@@ -44,6 +51,7 @@ public sealed class MultimodalAgentStreamingTests
             new MultimodalMessageStarted(0, 1, MultimodalChatRole.Assistant),
             new MultimodalMessageTextDelta(0, 1, 0, "look"),
             new MultimodalMessageContentReceived(0, 1, 1, outputImage),
+            new MultimodalMessageContentReceived(0, 1, 2, outputFile),
             new MultimodalChatCandidateCompleted(0, FinishReason.Stop),
             new MultimodalChatUsageReceived(usage)
         ];
@@ -93,6 +101,10 @@ public sealed class MultimodalAgentStreamingTests
         var answer = Assert.IsType<MultimodalMessage>(response.Candidates[0].Items[1]);
         Assert.Equal("look", Assert.IsType<TextContent>(answer.Contents[0]).Text);
         Assert.Same(outputImage, answer.Contents[1]);
+        Assert.Same(outputFile, answer.Contents[2]);
+        Assert.Same(ContentModality.File, outputFile.Modality);
+        Assert.Equal("report.pdf", outputFile.File.FileName);
+        Assert.Equal(nameof(FileMedia), outputFile.File.ToString());
         Assert.Equal(
             "other",
             Assert.IsType<TextContent>(
@@ -140,14 +152,15 @@ public sealed class MultimodalAgentStreamingTests
     [Fact]
     public async Task StreamedToolCallAndTypedResultAreReplayedExactly()
     {
-        var callImage = new ImageContent(new ImageMedia(
+        var callFile = new FileContent(new FileMedia(
             new InlineMediaSource(new byte[] { 1 }),
-            new MediaMimeType("image/png")));
-        var resultImage = new ImageContent(new ImageMedia(
+            new MediaMimeType("application/pdf")));
+        var resultFile = new FileContent(new FileMedia(
             new InlineMediaSource(new byte[] { 2 }),
-            new MediaMimeType("image/png")));
-        var client = new ToolCallingStreamingClient(callImage);
-        var executor = new RecordingMultimodalToolExecutor(resultImage);
+            new MediaMimeType("application/pdf"),
+            "result.pdf"));
+        var client = new ToolCallingStreamingClient(callFile);
+        var executor = new RecordingMultimodalToolExecutor(resultFile);
         var agent = new MultimodalAgent(
             client,
             (_, _) => ValueTask.FromResult(0),
@@ -172,12 +185,12 @@ public sealed class MultimodalAgentStreamingTests
         Assert.Equal("call-1", replayedCall.CallId);
         Assert.Equal("lookup", replayedCall.Name);
         Assert.Equal("{\"q\":\"x\"}", replayedCall.Arguments);
-        Assert.Same(callImage, Assert.Single(replayedCall.Contents));
+        Assert.Same(callFile, Assert.Single(replayedCall.Contents));
         var replayedResult = Assert.IsType<MultimodalToolResult>(client.Requests[1].Items[2]);
         Assert.Same(executor.Result, replayedResult);
         Assert.Equal("call-1", replayedResult.CallId);
         Assert.Equal("done", Assert.IsType<TextContent>(replayedResult.Contents[0]).Text);
-        Assert.Same(resultImage, replayedResult.Contents[1]);
+        Assert.Same(resultFile, replayedResult.Contents[1]);
         Assert.Same(initial, result.Transcript[0]);
         Assert.Same(replayedCall, result.Transcript[1]);
         Assert.Same(replayedResult, result.Transcript[2]);
@@ -288,10 +301,13 @@ public sealed class MultimodalAgentStreamingTests
         var text = new MultimodalContentCapability(ContentModality.Text);
         var image = new MultimodalContentCapability(
             ContentModality.Image,
-            [MediaSourceKind.ReplayableStream, MediaSourceKind.Uri]);
+            [MediaSourceKind.Inline, MediaSourceKind.ReplayableStream, MediaSourceKind.Uri]);
+        var file = new MultimodalContentCapability(
+            ContentModality.File,
+            [MediaSourceKind.Inline, MediaSourceKind.ReplayableStream, MediaSourceKind.Uri]);
         return new MultimodalChatCapabilities(
-            [text, image],
-            [text, image],
+            [text, image, file],
+            [text, image, file],
             supportsTools);
     }
 
@@ -328,7 +344,7 @@ public sealed class MultimodalAgentStreamingTests
         }
     }
 
-    private sealed class ToolCallingStreamingClient(ImageContent callImage)
+    private sealed class ToolCallingStreamingClient(MultimodalContent callContent)
         : IStreamingMultimodalChatClient
     {
         public MultimodalChatCapabilities Capabilities { get; } =
@@ -350,7 +366,7 @@ public sealed class MultimodalAgentStreamingTests
             {
                 yield return new MultimodalToolCallDelta(
                     0, 0, "call", "look", "{\"q\":", ToolInputKind.Json);
-                yield return new MultimodalToolCallContentReceived(0, 0, 0, callImage);
+                yield return new MultimodalToolCallContentReceived(0, 0, 0, callContent);
                 yield return new MultimodalToolCallDelta(
                     0, 0, "-1", "up", "\"x\"}", ToolInputKind.Json);
                 yield return new MultimodalChatCandidateCompleted(0, FinishReason.ToolCalls);
@@ -429,11 +445,11 @@ public sealed class MultimodalAgentStreamingTests
 
     private sealed class RecordingMultimodalToolExecutor : IMultimodalToolExecutor
     {
-        private readonly ImageContent _resultImage;
+        private readonly MultimodalContent _resultContent;
 
-        public RecordingMultimodalToolExecutor(ImageContent resultImage)
+        public RecordingMultimodalToolExecutor(MultimodalContent resultContent)
         {
-            _resultImage = resultImage;
+            _resultContent = resultContent;
             using var schema = JsonDocument.Parse("{}");
             Definitions = [ToolDefinition.Json("lookup", schema.RootElement)];
         }
@@ -451,7 +467,7 @@ public sealed class MultimodalAgentStreamingTests
             Call = Assert.Single(calls);
             Result = new MultimodalToolResult(
                 Call.CallId,
-                [new TextContent("done"), _resultImage]);
+                [new TextContent("done"), _resultContent]);
             IReadOnlyList<MultimodalToolResult> results = [Result];
             return Task.FromResult(results);
         }

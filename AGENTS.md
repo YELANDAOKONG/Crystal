@@ -21,7 +21,7 @@ change. Implementation must never become the only source of truth.
   JSON-schema and unstructured-text tool input, text tool results, Agent
   execution, and Harness composition.
 - An independent optional multimodal Embedding client accepts ordered typed
-  text, image, audio, and video content inputs without widening text Embedding.
+  text, image, audio, video, and file content inputs without widening text Embedding.
 - Completion and text or multimodal Chat may carry a caller-authored hard JSON
   Schema requirement for final text output. Agents and Harnesses forward it
   unchanged; adapters reject unsupported requests.
@@ -40,8 +40,9 @@ change. Implementation must never become the only source of truth.
 - The current release line supports an independent duplex realtime media
   session contract with exact caller input, typed output segments, tool-result
   correlation, and explicit or automatic turn boundaries.
-- The current release line contains no generic attachment or file-content bag
-  or PDF contract.
+- File is a distinct whole-file content modality for multimodal Chat, Tool,
+  and Embedding. It uses explicit MIME and source shapes, including for PDFs.
+  There is no generic attachment bag, file parser, or provider file management.
 - Crystal.Pipelines is an independent, generic middleware library for typed
   asynchronous operations and event streams.
 - Crystal.Workflows is an independent, caller-defined typed graph runtime with

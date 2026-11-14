@@ -10,6 +10,11 @@ public sealed record GenerationReasoningItem : GenerationItem
     public GenerationReasoningItem(MultimodalReasoningContent content)
     {
         ArgumentNullException.ThrowIfNull(content, nameof(content));
+        if (content.Parts.Any(static part => part.Content is FileContent))
+        {
+            throw new ArgumentException("Generation does not produce file reasoning parts.", nameof(content));
+        }
+
         Content = content;
     }
 

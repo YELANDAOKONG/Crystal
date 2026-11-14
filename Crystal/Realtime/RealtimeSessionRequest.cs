@@ -28,6 +28,11 @@ public sealed record RealtimeSessionRequest
 
         OutputModalities = CollectionSnapshot.Create(
             outputModalities, nameof(outputModalities), allowEmpty: false);
+        if (OutputModalities.Contains(ContentModality.File))
+        {
+            throw new ArgumentException("Live output segments cannot be files.", nameof(outputModalities));
+        }
+
         if (OutputModalities.Distinct().Count() != OutputModalities.Count)
         {
             throw new ArgumentException("Output modalities must be unique.", nameof(outputModalities));

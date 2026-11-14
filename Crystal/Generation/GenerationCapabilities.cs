@@ -25,6 +25,11 @@ public sealed record GenerationCapabilities
             nameof(outputs),
             allowEmpty: false);
 
+        if (Outputs.Any(static output => output.Modality == ContentModality.File))
+        {
+            throw new ArgumentException("Generation does not produce file outputs.", nameof(outputs));
+        }
+
         if (Inputs
             .GroupBy(static input => new
             {

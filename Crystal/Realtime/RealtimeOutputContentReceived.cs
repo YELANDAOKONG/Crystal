@@ -19,6 +19,11 @@ public sealed record RealtimeOutputContentReceived : RealtimeOutputEvent
         ArgumentException.ThrowIfNullOrWhiteSpace(outputId);
         ArgumentOutOfRangeException.ThrowIfNegative(segmentIndex);
         ArgumentNullException.ThrowIfNull(content);
+        if (content is FileContent)
+        {
+            throw new ArgumentException("A live output segment cannot be a file.", nameof(content));
+        }
+
         if (mediaOffset < TimeSpan.Zero)
         {
             throw new ArgumentOutOfRangeException(nameof(mediaOffset));

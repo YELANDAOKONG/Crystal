@@ -14,6 +14,10 @@ public sealed record RealtimeOutputReasoningReceived : RealtimeOutputEvent
         ArgumentException.ThrowIfNullOrWhiteSpace(outputId);
         ArgumentOutOfRangeException.ThrowIfNegative(itemIndex);
         ArgumentNullException.ThrowIfNull(content);
+        if (content.Parts.Any(static part => part.Content is FileContent))
+        {
+            throw new ArgumentException("Live reasoning parts cannot be files.", nameof(content));
+        }
 
         OutputId = outputId;
         ItemIndex = itemIndex;

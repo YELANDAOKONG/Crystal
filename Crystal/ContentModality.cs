@@ -17,6 +17,9 @@ public sealed record ContentModality
     /// <summary>Identifies video content.</summary>
     public static ContentModality Video { get; } = new("video");
 
+    /// <summary>Identifies complete file content.</summary>
+    public static ContentModality File { get; } = new("file");
+
     private ContentModality(string value)
     {
         Value = value;

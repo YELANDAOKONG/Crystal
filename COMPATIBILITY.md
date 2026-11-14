@@ -199,7 +199,7 @@ indexes must remain stable and contiguous so the stream can be assembled
 without inferred content.
 
 IMultimodalChatClient is a separate profile. It can preserve readable text,
-image, audio, and video reasoning content plus opaque continuation state.
+image, audio, video, and file reasoning content plus opaque continuation state.
 IStreamingMultimodalChatClient adds optional typed streaming without changing
 that complete-response contract. An adapter must advertise the individual input
 and output modalities and media source shapes it supports. It must still validate
@@ -208,14 +208,14 @@ provider-specific role, combination, and cardinality rules for each request.
 A multimodal stream starts each message explicitly so its role and an empty
 content sequence remain representable. Text content may be emitted as deltas.
 Complete content events carry one exact TextContent, ImageContent, AudioContent,
-or VideoContent value and cannot be mixed with text deltas at the same index.
+VideoContent, or FileContent value and cannot be mixed with text deltas at the same index.
 Reasoning parts use the same rule and retain their classification. Tool-call
 identifier, name, and raw arguments remain deltas, while optional tool-call
 content arrives as complete indexed content blocks.
 
 ## Media source compatibility
 
-- Every image, audio, and video value has an explicit MIME type. Adapters must not
+- Every image, audio, video, and file value has an explicit MIME type. Adapters must not
   infer a different representation and silently rewrite the value.
 - InlineMediaSource contains a complete immutable copy.
 - UriMediaSource is an absolute caller value. Crystal never fetches it; an adapter
@@ -225,8 +225,21 @@ content arrives as complete indexed content blocks.
 - Length and ExpiresAt preserve reported source facts. Crystal does not refresh,
   resolve, or fetch an expiring source.
 - File paths and provider media identifiers remain external-adapter concerns.
+- FileContent describes one complete file. Adapters validate the requested
+  modality, source shape, file MIME type, and provider-specific limits. If an
+  optional supplied file name cannot be honored, the adapter rejects the
+  request under the common capability rule.
+- File blocks are available to multimodal Chat, Tool, and Embedding. Media
+  generation, live input/output segments, and live readable reasoning exclude
+  files. Adapters validate whether live sessions support files in supplied Chat
+  context or tool payloads.
 - Adapter errors and diagnostics must not include media bytes or media URIs by
   default.
+
+The [OpenAI file input guide](https://developers.openai.com/api/docs/guides/file-inputs)
+documents endpoint-specific file formats and source shapes. The
+[Gemini embedding guide](https://ai.google.dev/gemini-api/docs/embeddings)
+documents PDF input with model-specific size and combination limits.
 
 ## Immediate generation compatibility
 
@@ -393,7 +406,7 @@ accepted input in the same order. It must not silently omit rejected inputs.
 Dimensions are reported by each vector and are not hard-coded by Crystal.
 
 IEmbeddingClient remains text-only. IMultimodalEmbeddingClient is an independent
-optional profile for ordered typed text, image, audio, and video input. Each
+optional profile for ordered typed text, image, audio, video, and file input. Each
 embedding input retains its content-block order, and each request retains its
 input order. An adapter must return exactly one vector per request input in
 that same order; it must reject an unsupported modality, media source shape,
@@ -408,8 +421,8 @@ combination or batch size is supported by the configured model.
 
 Capabilities advertise individual accepted modalities and source shapes, not
 every combination. Media sources retain their existing ownership and expiration
-semantics. Crystal does not fetch, transcode, or inspect them. PDFs and generic
-attachments are outside this profile.
+semantics. Crystal does not fetch, transcode, or inspect them. A PDF can be
+carried as FileContent with MIME type application/pdf when the adapter supports it.
 TokenUsage is present only when provider-reported token accounting is
 semantically available for the complete request; media billing units are not
 silently converted into tokens.

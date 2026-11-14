@@ -241,7 +241,7 @@ Opaque state:
 ### Crystal.Media
 
 Owns explicit MIME types, codecs, dimensions, aspect ratios, and typed image,
-audio, and video values. Media data is carried by one of three closed source
+audio, video, and file values. Media data is carried by one of three closed source
 shapes:
 
 - InlineMediaSource owns a private copy and returns copies to callers;
@@ -258,11 +258,14 @@ ExpiresAt value without Crystal refreshing or fetching them.
 Media values contain no file paths, provider resource identifiers, transport
 DTOs, or automatic upload/download behavior. MIME is explicit. Optional media
 metadata describes known facts and is not inferred by Crystal.
+FileMedia describes one complete file with an explicit MIME type and optional
+exact file name. The file name is metadata. Source access uses only the
+supplied MediaSource.
 
 ### Crystal.Multimodal
 
-Owns the closed portable text, image, audio, and video content hierarchy, media
-source-aware content capabilities, and multimodal reasoning content. It also
+Owns the closed portable text, image, audio, video, and file content hierarchy,
+media source-aware content capabilities, and multimodal reasoning content. It also
 owns an independent non-streaming and optional typed streaming Chat family under
 Crystal.Multimodal.Chat and model-facing multimodal tool calls and results under
 Crystal.Multimodal.Tools.
@@ -274,6 +277,8 @@ preserves ordered readable typed parts, each with an open summary/trace
 classification, plus opaque continuation state. The
 multimodal Chat client advertises coarse individual input and output shapes.
 Role-specific, cardinality, and conditional model rules remain adapter-owned.
+FileContent uses the same ordered content positions and source-kind capability
+profiles in Chat, Tool, and multimodal Embedding.
 
 ### Crystal.Generation
 
@@ -288,6 +293,7 @@ source, mask, first frame, and last frame. Image, audio, and video inputs remain
 typed, including audio reference or source inputs supplied to video generation.
 Editing or transformation is conditioned generation through source and mask
 inputs; Crystal has no universal edit mode or edit client.
+Generation capabilities, content items, and readable reasoning exclude files.
 
 Requirements are hard constraints. An adapter must reject a requirement or input
 combination it cannot honor and must not silently drop, approximate, reorder,
@@ -347,7 +353,11 @@ adapter rejects unsupported combinations and maps provider controls itself.
 One IRealtimeMediaSession accepts serialized SendAsync calls while exactly one
 ReceiveAsync enumeration may overlap them. RealtimeInputContent carries a
 complete typed text or independently decodable media segment, with optional
-non-negative media offset. RealtimeInputTurnEnded is valid for explicit turn
+non-negative media offset. Live input and output segments and readable reasoning
+exclude files.
+Initial Chat context and multimodal tool payloads use their existing contracts;
+adapters validate whether a session accepts those payloads.
+RealtimeInputTurnEnded is valid for explicit turn
 mode. Tool results use the exact correlated MultimodalToolResult value.
 Output content events preserve exact typed segments with stable output ID and
 zero-based per-output segment indexes; interleaved outputs retain event order.
@@ -590,8 +600,8 @@ additionally carry a text-segment index; every delta for one semantic segment
 uses the same index. Multimodal message content, reasoning parts, and tool-call
 content carry stable zero-based indexes. A message-started event preserves its
 role and permits an empty content sequence. Text blocks may arrive as exact
-deltas or as one complete content event. Image, audio, and video arrive as one
-complete content event; this contract does not stream media bytes.
+deltas or as one complete content event. Each image, audio, video, or file block
+arrives as one complete content event. Chat streams do not stream media bytes.
 
 Identifier, name, argument, text, and reasoning deltas are explicitly identified
 as deltas; adapters must not pretend partial data is complete. A content-received
@@ -634,7 +644,7 @@ The current media architecture is additive:
 
 - existing text contracts remain valid and text-only;
 - multimodal Chat, Tool, Agent, and Harness APIs are independent families;
-- typed image, audio, and video values replace an untyped attachment bag;
+- image, audio, video, and file values have distinct content types;
 - inline-copy, absolute-URI, and replayable-stream ownership is explicit;
 - target-output generation clients remain separate;
 - closed typed inputs can condition every generation target when an adapter

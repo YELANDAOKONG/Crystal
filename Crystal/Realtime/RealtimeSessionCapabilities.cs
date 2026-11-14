@@ -18,6 +18,16 @@ public sealed record RealtimeSessionCapabilities
         Inputs = CollectionSnapshot.Create(inputs, nameof(inputs), allowEmpty: false);
         Outputs = CollectionSnapshot.Create(outputs, nameof(outputs), allowEmpty: false);
 
+        if (Inputs.Any(static input => input.Modality == ContentModality.File))
+        {
+            throw new ArgumentException("Live input segments cannot be files.", nameof(inputs));
+        }
+
+        if (Outputs.Any(static output => output.Modality == ContentModality.File))
+        {
+            throw new ArgumentException("Live output segments cannot be files.", nameof(outputs));
+        }
+
         if (Inputs.Select(static input => input.Modality).Distinct().Count() != Inputs.Count)
         {
             throw new ArgumentException("Input modalities must be unique.", nameof(inputs));
