@@ -40,6 +40,10 @@ change. Implementation must never become the only source of truth.
 - The current release line supports an independent duplex realtime media
   session contract with exact caller input, typed output segments, tool-result
   correlation, and explicit or automatic turn boundaries.
+- Independent text and multimodal Decision clients evaluate caller-authored
+  predicate, choice, and score questions against exact shared evidence.
+  Scoped content, ordered results, refusal, and whole-request blocking are
+  preserved. Model discovery, thresholds, and resulting actions remain external.
 - File is a distinct whole-file content modality for multimodal Chat, Tool,
   and Embedding. It uses explicit MIME and source shapes, including for PDFs.
   There is no generic attachment bag, file parser, or provider file management.

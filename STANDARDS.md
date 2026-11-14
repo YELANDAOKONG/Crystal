@@ -155,6 +155,20 @@ Tests must prove:
   returns exact text or multimodal output.
 - Unsupported provider semantics fail at the adapter boundary.
 
+## Decisions
+
+- Snapshot shared evidence, scoped blocks, questions, and results in order.
+  Keep native JSON separate from text and clone JSON values at the boundary.
+- Validate case-sensitive question identity, typed choice identity, ordered
+  rubric cardinality, and finite probability and confidence values. Preserve
+  provider-reported scores and confidence without deriving or normalizing them.
+- Preserve per-question refusals as ordered results and represent an input
+  block as a whole-request outcome. Protocol failures and cancellation remain
+  exceptions.
+- The text and multimodal clients are independent. Support declarations stay
+  coarse. External adapters enforce content placement, combinations, and
+  provider limits and never rewrite model-bound decision evidence.
+
 ## Media and generation
 
 - Content modalities and generation input purposes are closed portable values.

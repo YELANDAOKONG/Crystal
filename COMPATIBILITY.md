@@ -49,6 +49,40 @@ portable individual input and output shapes; they are not a conditional-rule or
 model-constraint language. Adapters validate model-specific combinations,
 cardinality, size, duration, and other constraints.
 
+## Decision compatibility
+
+Decision capability profiles describe individual question and input shapes.
+Adapters reject unsupported combinations before sending a request. This
+includes position-specific content, transcript items, native JSON shapes,
+boolean options, descriptions, score labels, and service limits. Request
+blocks retain their order and scope. A wire representation may encode the
+supplied values in a different shape when it preserves their meaning. It
+must not prepend instructions, flatten structured evidence into a text
+fallback, or move criteria to another scope.
+
+Map provider answers to the original unique caller question IDs. For a
+name-keyed response, restore request order explicitly. Return a matching
+typed result or a refusal for every question. An input block affecting the
+whole request maps to DecisionResponse.Blocked. Missing, duplicate, unknown,
+or mismatched answers without such a block indicate an adapter or provider
+failure. Map option probabilities by exact value, including value type, and
+score probabilities by zero-based level. Preserve the reported selection,
+score, and optional confidence independently of probabilities. Do not
+compute confidence from the distribution or renormalize it.
+
+The [TypeSafe System One schema](https://api.typesafe.ai/openapi.json) and
+[Gemini Decisions reference](https://aistudio.google.com/api-reference/decisions)
+use name-keyed question and result maps. The
+[OpenAI Decisions reference](https://developers.openai.com/api/reference/resources/decisions/methods/create)
+uses ordered questions and results and documents typed string and boolean
+choice values and per-question refusals. Gemini documents whole-input blocking.
+TypeSafe accepts structured JSON evidence and criteria. OpenAI accepts
+structured JSON blocks in evidence and instructions. Gemini documents document
+input including PDF. The adapter advertises only content shapes it can honor
+in the specified positions. For example, a client accepting images as shared
+evidence need not accept images in score criteria. Image localization,
+provider-native settings, and model selection remain adapter responsibilities.
+
 ## Structured final text requirement
 
 JsonOutputRequirement is a caller-authored JSON Schema and a hard output

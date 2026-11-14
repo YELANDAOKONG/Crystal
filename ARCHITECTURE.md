@@ -42,9 +42,9 @@ No Crystal assembly depends on external implementations.
 
 ### Crystal
 
-Owns cross-capability primitives, Reasoning, Embeddings, Completions, text Chat,
-media sources and values, typed multimodal content, Chat, Embedding, and live
-sessions,
+Owns cross-capability primitives, Reasoning, Embeddings, Completions, Decisions,
+text Chat, media sources and values, typed multimodal content, Chat, Embedding,
+and live sessions,
 immediate, streaming, resumable-operation, and batch image, audio, and video
 generation, and all model-facing text and multimodal tool
 protocol values. Keeping protocol values in Crystal lets provider adapters
@@ -406,6 +406,42 @@ output requirement. It is independent of the tool input definition and does
 not change message, tool, reasoning, or stream event shapes. Agents and
 Harnesses forward its exact value through every model turn. Crystal does not
 parse or repair provider output and never injects a formatting prompt.
+
+### Crystal.Decisions and Crystal.Multimodal.Decisions
+
+The independent Decision clients expose one cancellable DecideAsync operation.
+Each request snapshots an ordered non-empty question sequence with unique
+case-sensitive IDs. Shared evidence is either ordered content blocks or an
+explicit ordered transcript using the corresponding Chat protocol values.
+Transcripts preserve the original items, roles, and tool correlation, and serve
+as evidence to evaluate. The operation does not continue a conversation.
+
+Both profiles use the same question types parameterized by their content type.
+The non-media profile uses exact strings and native JSON object or array blocks.
+The multimodal profile uses the existing MultimodalContent hierarchy and the
+same structured JSON block. DecisionContent snapshots JSON without interpreting
+or rendering it. Shared evidence, question instructions, predicate outcome
+criteria, choice criteria, and score criteria retain their own block order
+and scope. Choice values distinguish exact strings from booleans. The numeric
+value of a score level is its zero-based position. An optional label is
+preserved separately from the level criteria.
+
+The capability profiles declare the supported question kinds, non-media shapes
+by position, transcript support, and boolean choice support. The multimodal
+profile also declares media modality and source kinds by position. These are
+individual shapes. Adapters validate supported combinations, the contents of
+transcripts, and provider-dependent limits without silently changing evidence.
+
+A complete response is constructed against its request. The response checks
+one result per question in request order, with matching ID and result type.
+Choice probabilities match the original option values and order. For score
+probabilities, the response checks the rubric length and the adapter maps
+values to their original positions. The reported numeric values are kept as
+received, with finite unit-interval validation for
+probabilities and confidence. Each question can instead carry a refusal. A
+whole-request block is a separate response state with no results. Neither the
+clients nor the data contracts apply thresholds, execute actions, or choose a
+model or fallback.
 
 ### Crystal.Multimodal.Embeddings
 

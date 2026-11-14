@@ -379,6 +379,28 @@ public static class DirectModelExample
 }
 ~~~
 
+### Decisions
+
+`IDecisionClient` evaluates ordered questions over shared text or structured
+JSON. `IMultimodalDecisionClient` adds ordered typed media, including files.
+Either client can accept its corresponding ordered Chat transcript as evidence
+when advertised. Questions can carry their own instructions and criteria.
+
+~~~csharp
+using Crystal.Decisions;
+using Crystal.Decisions.Questions;
+
+var request = new DecisionRequest(
+    [new DecisionContent<string>(message)],
+    [new PredicateQuestion<string>("billing", [new("Is this about billing?")])]);
+var response = await client.DecideAsync(request, cancellationToken);
+~~~
+
+A response contains one predicate, choice, score, or refusal result per
+question, or describes a block affecting the entire request. The adapter
+declares supported evidence and criteria positions. Callers decide what to do
+with the reported probabilities, confidence, and scores.
+
 ### Tools and Agent
 
 Callers implement ITool, register tools in an immutable catalog, choose serial or

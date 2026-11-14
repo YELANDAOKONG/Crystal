@@ -29,9 +29,9 @@ library's public API.
 ## Production assemblies
 
 - Crystal contains provider-adapter contracts, the text and multimodal protocol
-  foundations, media values, multimodal Embedding, and immediate, streaming,
-  resumable operation, and batch generation clients, and live media session
-  contracts.
+  foundations, media values, multimodal Embedding, text and multimodal Decision,
+  immediate, streaming, resumable operation, and batch generation clients,
+  and live media session contracts.
 - Crystal.Tools adds independent text and multimodal tool registration, policy,
   and execution families.
 - Crystal.Agents adds independent text and multimodal model/tool loops with
@@ -86,6 +86,22 @@ depending on tool execution, Agent runtime, or Harness composition.
   the call and stream preserve that portable shape.
 - Multiple candidates and open-ended finish reasons.
 - Non-streaming and optional typed streaming client contracts.
+
+### Decisions
+
+- Independent text and multimodal clients evaluate one body of shared evidence
+  against a non-empty ordered collection of caller-authored questions.
+- Text and native structured JSON are supported contract shapes in both
+  profiles. The multimodal profile also describes typed media. Callers can
+  explicitly supply ordered Chat items as shared evidence.
+- Predicate, choice, and score questions preserve scoped instructions and
+  criteria. Choice values retain string or boolean identity. Score levels use
+  zero-based rubric order.
+- Responses preserve one result per question, including individual refusals,
+  or a whole-request block. Probabilities, confidence, and expected scores are
+  service-reported. Callers choose thresholds and subsequent actions.
+- Adapters declare their supported individual shapes and enforce combinations.
+  Image localization remains an adapter capability.
 
 ### Structured final text
 
